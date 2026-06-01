@@ -1,0 +1,11 @@
+{
+  "name": "resume-analyzer",
+  "main": "server.js",
+  "dependencies": {
+    "axios": "^1.8.0",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "form-data": "^4.0.2",
+    "multer": "^2.0.0"
+  }
+}

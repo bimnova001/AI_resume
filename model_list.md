@@ -1,0 +1,1 @@
+ bge-m3 + Qwen2.5-7B-Instruct

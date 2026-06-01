@@ -1,0 +1,70 @@
+import json
+from llama_cpp import Llama
+
+llm = Llama.from_pretrained(
+	repo_id="Qwen/Qwen2.5-3B-Instruct-GGUF",
+	filename="qwen2.5-3b-instruct-q4_k_m.gguf",
+    n_ctx=2048,
+    n_threads=4,
+    verbose=False,
+    cache_dir="./model_cache"
+    
+)
+def analyze_resume(
+    resume_text,
+    job_title,
+    similarity,
+    rules,
+    job_type="",
+    is_new_grad=False,
+    language="en"
+):
+
+    requested_language = "Thai" if language == "th" else "English"
+    prompt = f"""
+You are a professional HR expert.
+
+Job Position:
+{job_title}
+
+Job Type:
+{job_type}
+
+New Graduate:
+{"Yes" if is_new_grad else "No"}
+
+Resume:
+{resume_text[:4000]}
+
+Resume Rule Analysis:
+{rules}
+
+Job Match Score:
+{similarity}
+
+Please answer in {requested_language}.
+Return ONLY valid JSON. Do not include any extra text outside the JSON object.
+
+Format:
+
+{{
+  "resume_score": 0,
+  "match_comment": "",
+  "summary": "",
+  "strengths": [],
+  "weaknesses": [],
+  "missing_skills": [],
+  "recommended_projects": [],
+  "recommended_certificates": [],
+  "career_paths": [],
+  "recommended_actions": []
+}}
+"""
+
+    result = llm.create_completion(
+        prompt=prompt,
+        max_tokens=700,
+        temperature=0.2
+    )
+
+    return result["choices"][0]["text"]
