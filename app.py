@@ -54,6 +54,10 @@ async def analyze(
         resume_text
     )
 
+    normalized_language = language.strip().lower()
+    if normalized_language not in ("en", "th"):
+        normalized_language = "en"
+
     llm_result = analyze_resume(
         resume_text,
         job_title,
@@ -61,7 +65,7 @@ async def analyze(
         rules,
         job_type,
         is_new_grad.lower() in ("true", "1", "yes"),
-        language
+        "en"
     )
     
 
@@ -72,13 +76,39 @@ async def analyze(
         try:
             return json.loads(text)
         except json.JSONDecodeError:
+            # Try to extract the first balanced JSON object from the string
             start = text.find("{")
-            end = text.rfind("}")
-            if start != -1 and end != -1 and end > start:
-                try:
-                    return json.loads(text[start:end + 1])
-                except json.JSONDecodeError:
-                    return None
+            if start == -1:
+                return None
+            depth = 0
+            in_string = False
+            escape = False
+            for i in range(start, len(text)):
+                ch = text[i]
+                if escape:
+                    escape = False
+                    continue
+                if ch == "\\":
+                    escape = True
+                    continue
+                if ch == '"':
+                    in_string = not in_string
+                    continue
+                if in_string:
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        candidate = text[start:i + 1]
+                        candidate = re.sub(r",\s*}" , "}", candidate)
+                        candidate = re.sub(r",\s*]", "]", candidate)
+                        try:
+                            return json.loads(candidate)
+                        except json.JSONDecodeError:
+                            return None
+                        break
             return None
 
     parsed = parse_json(llm_result)
@@ -93,6 +123,7 @@ async def analyze(
         "job_match": job_match_val,
         "job_title": job_title,
         "is_new_grad": str(is_new_grad),
+        "language": normalized_language,
         "rules": rules,
         "analysis_raw": llm_result,
         "analysis": parsed if parsed is not None else llm_result

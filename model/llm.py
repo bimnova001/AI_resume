@@ -20,7 +20,7 @@ def analyze_resume(
     language="en"
 ):
 
-    requested_language = "Thai" if language == "th" else "English"
+    requested_language = "English"
     prompt = f"""
 You are a professional HR expert.
 
@@ -42,8 +42,10 @@ Resume Rule Analysis:
 Job Match Score:
 {similarity}
 
-Please answer in {requested_language}.
-Return ONLY valid JSON. Do not include any extra text outside the JSON object.
+Instructions:
+- Answer in English.
+- Keep the JSON keys in English exactly as shown below.
+- Return ONLY valid JSON. Do not include any extra text outside the JSON object.
 
 Format:
 
@@ -64,7 +66,7 @@ Format:
     result = llm.create_completion(
         prompt=prompt,
         max_tokens=700,
-        temperature=0.2
+        temperature=0.0
     )
 
     return result["choices"][0]["text"]

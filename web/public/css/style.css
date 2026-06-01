@@ -253,6 +253,11 @@ li {
     margin-bottom: 10px;
 }
 
+.muted {
+    color: #94a3b8;
+    font-style: italic;
+}
+
 pre {
     background: #0f172a;
     color: #f8fafc;

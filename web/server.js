@@ -30,6 +30,9 @@ app.post(
             form.append("job_title", req.body.job_title);
             form.append("job_type", req.body.job_type || "");
             form.append("is_new_grad", req.body.is_new_grad || "false");
+            form.append("language", req.body.language || "en");
+
+            console.log("Proxy received language:", req.body.language);
 
             const response =
                 await axios.post(
