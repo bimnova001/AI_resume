@@ -112,89 +112,44 @@ const thaiTranslations = {
     "recommended_actions": "ข้อแนะนำเพิ่มเติม",
 };
 
-function translateText(text, lang) {
+async function translateText(text, lang) {
     if (lang !== "th" || !text) return text;
     if (typeof text !== "string") return text;
 
-    let result = text;
+    try {
+        const response = await fetch("/translate", {
+            method: "POST",
+            body: JSON.stringify({ text }),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
 
-    // Comprehensive Thai translation for common resume terms and phrases
-    const translations = {
-        "resume": "เรซูเม่",
-        "relevant": "ที่เกี่ยวข้อง",
-        "job position": "ตำแหน่งงาน",
-        "strong background": "พื้นฐานที่แข็งแกร่ง",
-        "lacks": "ขาด",
-        "experience": "ประสบการณ์",
-        "projects": "โครงการ",
-        "certificates": "ใบรับรอง",
-        "graduate": "บัณฑิต",
-        "recent graduate": "บัณฑิตจบใหม่",
-        "skills": "ทักษะ",
-        "programming languages": "ภาษาโปรแกรมมิ่ง",
-        "operating systems": "ระบบปฏิบัติการ",
-        "software": "ซอฟต์แวร์",
-        "development": "การพัฒนา",
-        "web development": "พัฒนาเว็บ",
-        "teaching": "การสอน",
-        "user experience design": "การออกแบบประสบการณ์ผู้ใช้",
-        "relevant experience": "ประสบการณ์ที่เกี่ยวข้อง",
-        "lack of": "ขาดแคลน",
-        "directly related": "เกี่ยวข้องโดยตรง",
-        "self-motivated": "มีสติเต็มไปด้วย",
-        "creative thinker": "ผู้คิดสร้างสรรค์",
-        "detail-oriented": "สนใจรายละเอียด",
-        "time management": "การจัดการเวลา",
-        "develop": "พัฒนา",
-        "create": "สร้าง",
-        "contribute": "มีส่วนร่วม",
-        "open-source": "โอเพนซอร์ส",
-        "engineer": "วิศวกร",
-        "scientist": "นักวิทยาศาสตร์",
-        "developer": "นักพัฒนา",
-        "obtain": "ได้มา",
-        "gain": "ได้รับ",
-        "portfolio": "พอร์ตโฟลิโอ",
-        "GitHub": "GitHub",
-        "academic": "ด้านวิชาการ",
-        "mathematics": "คณิตศาสตร์",
-        "physics": "ฟิสิกส์",
-        "computer science": "วิทยาศาสตร์คอมพิวเตอร์",
-        "candidate": "ผู้สมัคร",
-        "position": "ตำแหน่ง",
-        "match": "ตรงกับ",
-        "The resume": "เรซูเม่",
-        "provided": "ที่ให้มา",
-        "is relevant": "มีความเกี่ยวข้อง",
-        "However": "อย่างไรก็ตาม",
-        "lacking": "ขาด",
-        "which are": "ซึ่ง",
-        "are strong": "แข็งแกร่ง",
-        "but they are": "แต่มัน",
-        "not directly": "ไม่ตรง",
-    };
+        if (!response.ok) {
+            console.warn("Translation API error, returning original text");
+            return text;
+        }
 
-    // Replace longer phrases first (to avoid partial replacements)
-    const sortedKeys = Object.keys(translations).sort((a, b) => b.length - a.length);
-    
-    for (const key of sortedKeys) {
-        const regex = new RegExp(`\\b${key}\\b`, "gi");
-        result = result.replace(regex, translations[key]);
+        const data = await response.json();
+        return data.translatedText || text;
+    } catch (err) {
+        console.warn("Translation failed:", err, "returning original text");
+        return text;
     }
-
-    return result;
 }
 
-function translateAnalysisObject(analysis, lang) {
+async function translateAnalysisObject(analysis, lang) {
     if (lang !== "th" || typeof analysis !== "object" || !analysis) return analysis;
 
     const translated = {};
     for (const [key, value] of Object.entries(analysis)) {
         if (typeof value === "string") {
-            translated[key] = translateText(value, lang);
+            translated[key] = await translateText(value, lang);
         } else if (Array.isArray(value)) {
-            translated[key] = value.map(item => 
-                typeof item === "string" ? translateText(item, lang) : item
+            translated[key] = await Promise.all(
+                value.map(item => 
+                    typeof item === "string" ? translateText(item, lang) : Promise.resolve(item)
+                )
             );
         } else {
             translated[key] = value;
@@ -248,15 +203,15 @@ function renderChips(items) {
     `;
 }
 
-function renderAnalysis(data, lang) {
+async function renderAnalysis(data, lang) {
     let analysis = typeof data.analysis === "object"
         ? data.analysis
         : tryParseJson(data.analysis);
 
     // Translate analysis content based on language selection
     if (lang === "th") {
-        console.log("Translating analysis to Thai...", analysis);
-        analysis = translateAnalysisObject(analysis, lang);
+        console.log("Translating analysis to Thai via LibreTranslate...", analysis);
+        analysis = await translateAnalysisObject(analysis, lang);
         console.log("Translated analysis:", analysis);
     }
 
@@ -382,7 +337,7 @@ async function analyzeResume() {
         console.log("Parsed analysis:", parsedAnalysis);
         console.groupEnd();
 
-        resultDiv.innerHTML = renderAnalysis(data, lang);
+        resultDiv.innerHTML = await renderAnalysis(data, lang);
     } catch (err) {
         console.error(err);
         resultDiv.innerHTML = `<div class="result-card"><h2>${translations[lang].errorTitle}</h2><p>${translations[lang].error}</p></div>`;

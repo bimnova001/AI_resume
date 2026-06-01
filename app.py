@@ -3,11 +3,14 @@ from fastapi import UploadFile
 from fastapi import File
 from fastapi import Form
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from model.parser import extract_pdf
 from model.embedding import calculate_similarity
 from model.rule import analyze_resume_structure
 from model.llm import analyze_resume
+
+from googletrans import Translator
 
 import json
 import os
@@ -23,11 +26,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize translator
+translator = Translator()
+
+# Request model for translation
+class TranslateRequest(BaseModel):
+    text: str
+    target_lang: str = "th"
+
 
 
 UPLOAD_DIR = "uploads"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@app.post("/translate")
+async def translate_text(req: TranslateRequest):
+    """Translate text to target language using googletrans"""
+    try:
+        if not req.text or req.text.strip() == "":
+            return {"translatedText": req.text}
+        
+        result = translator.translate(req.text, dest=req.target_lang)
+        return {"translatedText": result.text}
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return {"translatedText": req.text}
 
 @app.post("/analyze")
 async def analyze(
