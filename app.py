@@ -16,6 +16,7 @@ import json
 import os
 import re
 import shutil
+import asyncio
 
 app = FastAPI()
 app.add_middleware(
@@ -47,8 +48,16 @@ async def translate_text(req: TranslateRequest):
         if not req.text or req.text.strip() == "":
             return {"translatedText": req.text}
         
-        result = translator.translate(req.text, dest=req.target_lang)
+        # googletrans can be slow sometimes, adding delay tolerance
+        import asyncio
+        result = await asyncio.wait_for(
+            asyncio.to_thread(translator.translate, req.text, req.target_lang),
+            timeout=30.0
+        )
         return {"translatedText": result.text}
+    except asyncio.TimeoutError:
+        print(f"Translation timeout for: {req.text[:50]}...")
+        return {"translatedText": req.text}
     except Exception as e:
         print(f"Translation error: {e}")
         return {"translatedText": req.text}

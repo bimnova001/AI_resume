@@ -67,7 +67,7 @@ app.post("/translate", async (req, res) => {
                 text: text,
                 target_lang: "th"
             },
-            { timeout: 10000 }
+            { timeout: 35000 }
         );
 
         console.log("Translation response:", response.data);

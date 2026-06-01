@@ -117,13 +117,19 @@ async function translateText(text, lang) {
     if (typeof text !== "string") return text;
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 40000);
+        
         const response = await fetch("/translate", {
             method: "POST",
             body: JSON.stringify({ text }),
             headers: {
                 "Content-Type": "application/json"
-            }
+            },
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             console.warn("Translation API error, returning original text");

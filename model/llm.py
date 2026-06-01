@@ -46,6 +46,10 @@ Instructions:
 - Answer in English.
 - Keep the JSON keys in English exactly as shown below.
 - Return ONLY valid JSON. Do not include any extra text outside the JSON object.
+- you should analyze the resume based on the job title, job type, new graduate status, and the provided rules.
+- Provide a comprehensive analysis of the resume's suitability for the job, including strengths, weaknesses, missing skills, and recommendations for improvement.
+- The analysis should be based on the content of the resume and how well it matches the job requirements, as well as the structure of the resume as indicated by the rules.
+- The job match score should be used to inform the analysis, but the final resume score should be a holistic assessment of the candidate's fit for the job, not just a reflection of the match score.
 
 Format:
 
