@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Details - Resume AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary:        #4338ca;
+            --primary-hover:  #3730a3;
+            --primary-light:  #eef2ff;
+            --primary-mid:    #6366f1;
+            --accent:         #6366f1;
+            --text-primary:   #0f172a;
+            --text-secondary: #475569;
+            --text-muted:     #94a3b8;
+            --surface:        #ffffff;
+            --bg:             #f8faff;
+            --bg-hero:        linear-gradient(160deg,#eef2ff 0%,#f0f4ff 40%,#ffffff 100%);
+            --border:         #e2e8f0;
+            --border-strong:  #c7d2fe;
+            --shadow-sm:      0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+            --shadow-md:      0 4px 16px rgba(67,56,202,.10), 0 2px 6px rgba(15,23,42,.05);
+            --shadow-lg:      0 12px 32px rgba(67,56,202,.14), 0 4px 12px rgba(15,23,42,.06);
+            --radius-sm:      8px;
+            --radius-md:      12px;
+            --radius-lg:      20px;
+            --radius-xl:      28px;
+            --font:           'Plus Jakarta Sans', system-ui, sans-serif;
+            --transition:     200ms cubic-bezier(.4,0,.2,1);
+        }
+        body {
+            font-family: var(--font);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        nav {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-menu.hidden {
+            display: none;
+        }
+
+        .user-menu-header {
+            padding: 16px;
+            border-bottom: 1px solid #e8eef5;
+            color: #2c3e50;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .user-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            color: #2c3e50;
+            text-decoration: none;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .user-menu-item:hover {
+            background: #f5f7fa;
+            padding-left: 20px;
+        }
+
+        .user-menu-item.logout {
+            color: #e74c3c;
+            border-top: 1px solid #e8eef5;
+            margin-top: 4px;
+        }
+
+        .container {
+            width: min(1200px, calc(100% - 32px));
+            margin: 48px auto;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            gap: 12px;
+            color: #764ba2;
+        }
+
+        .job-header {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .job-title {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        .job-company {
+            font-size: 1.2rem;
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .job-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f5f7fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .meta-item:hover {
+            background: #e8eef5;
+            transform: translateY(-2px);
+        }
+
+        .meta-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            border-radius: 10px;
+            font-size: 1.1rem;
+        }
+
+        .meta-text h4 {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0;
+        }
+
+        .meta-text p {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 4px 0 0;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f7fa;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 32px;
+        }
+
+        .section {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title i {
+            color: #667eea;
+            font-size: 1.3rem;
+        }
+
+        .description-text {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e8eef5;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item i {
+            color: #667eea;
+            min-width: 24px;
+            margin-top: 2px;
+        }
+
+        .skill-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .skill-tag {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border: 1px solid #667eea30;
+        }
+
+        .skill-tag:hover {
+            background: linear-gradient(135deg, #667eea25 0%, #764ba225 100%);
+            transform: translateY(-2px);
+        }
+
+        .sidebar-section {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            margin-bottom: 24px;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-title i {
+            color: #667eea;
+        }
+
+        .salary-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .salary-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .salary-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-top: 8px;
+        }
+
+        .company-info {
+            padding: 16px;
+            background: #f5f7fa;
+            border-radius: 12px;
+            margin-top: 16px;
+        }
+
+        .company-name {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .company-rating {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #f39c12;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .job-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .job-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .job-title {
+                font-size: 1.8rem;
+            }
+
+            .navbar-menu {
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <a href="/pages/job-listings.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Jobs
+        </a>
+
+        <!-- Job Header -->
+        <div class="job-header" data-aos="fade-up">
+            <div class="job-title" id="jobTitle">Senior AI Engineer</div>
+            <div class="job-company" id="jobCompany">Tech Corporation</div>
+
+            <div class="job-meta">
+                <div class="meta-item" data-aos="fade-up" data-aos-delay="100">
+                    <div class="meta-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="meta-text">
+                        <h4>Location</h4>
+                        <p id="jobLocation">Bangkok, Thailand</p>
+                    </div>
+                </div>
+
+                <div class="meta-item" data-aos="fade-up" data-aos-delay="200">
+                    <div class="meta-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div class="meta-text">
+                        <h4>Job Type</h4>
+                        <p id="jobType">Full-time</p>
+                    </div>
+                </div>
+
+                <div class="meta-item" data-aos="fade-up" data-aos-delay="300">
+                    <div class="meta-icon">
+                        <i class="fas fa-hourglass-start"></i>
+                    </div>
+                    <div class="meta-text">
+                        <h4>Posted</h4>
+                        <p id="jobPosted">2 days ago</p>
+                    </div>
+                </div>
+
+                <div class="meta-item" data-aos="fade-up" data-aos-delay="400">
+                    <div class="meta-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="meta-text">
+                        <h4>Applicants</h4>
+                        <p id="jobApplicants">24</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="job-actions">
+                <button class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Apply Now
+                </button>
+                <button class="btn btn-secondary">
+                    <i class="fas fa-bookmark"></i> Save Job
+                </button>
+                <button class="btn btn-secondary">
+                    <i class="fas fa-share-alt"></i> Share
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- Main Content -->
+            <div>
+                <!-- Job Description -->
+                <div class="section" data-aos="fade-up">
+                    <h2 class="section-title">
+                        <i class="fas fa-file-alt"></i> Job Description
+                    </h2>
+                    <p class="description-text" id="jobDescription">
+                        We are seeking a talented Senior AI Engineer to lead our machine learning team. 
+                        You will be responsible for developing cutting-edge AI solutions, mentoring junior engineers, 
+                        and driving innovation in our product offerings.
+                    </p>
+                </div>
+
+                <!-- Responsibilities -->
+                <div class="section" data-aos="fade-up" data-aos-delay="100">
+                    <h2 class="section-title">
+                        <i class="fas fa-tasks"></i> Responsibilities
+                    </h2>
+                    <div class="list-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>Lead the development of AI/ML models and algorithms</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>Mentor and guide junior machine learning engineers</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>Design and implement scalable ML pipelines</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>Collaborate with product and engineering teams</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>Conduct code reviews and maintain best practices</div>
+                    </div>
+                </div>
+
+                <!-- Requirements -->
+                <div class="section" data-aos="fade-up" data-aos-delay="200">
+                    <h2 class="section-title">
+                        <i class="fas fa-graduation-cap"></i> Requirements
+                    </h2>
+                    <div class="list-item">
+                        <i class="fas fa-star"></i>
+                        <div>5+ years of experience in AI/ML development</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-star"></i>
+                        <div>Strong proficiency in Python, TensorFlow, and PyTorch</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-star"></i>
+                        <div>Experience with deep learning and neural networks</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-star"></i>
+                        <div>Knowledge of cloud platforms (AWS, GCP, Azure)</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-star"></i>
+                        <div>Strong communication and leadership skills</div>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="section" data-aos="fade-up" data-aos-delay="300">
+                    <h2 class="section-title">
+                        <i class="fas fa-code"></i> Required Skills
+                    </h2>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Python</span>
+                        <span class="skill-tag">Machine Learning</span>
+                        <span class="skill-tag">TensorFlow</span>
+                        <span class="skill-tag">PyTorch</span>
+                        <span class="skill-tag">Deep Learning</span>
+                        <span class="skill-tag">AWS</span>
+                        <span class="skill-tag">Data Science</span>
+                        <span class="skill-tag">Leadership</span>
+                    </div>
+                </div>
+
+                <!-- Benefits -->
+                <div class="section" data-aos="fade-up" data-aos-delay="400">
+                    <h2 class="section-title">
+                        <i class="fas fa-gift"></i> Benefits
+                    </h2>
+                    <div class="list-item">
+                        <i class="fas fa-check"></i>
+                        <div>Competitive salary and performance bonuses</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-check"></i>
+                        <div>Health insurance and retirement benefits</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-check"></i>
+                        <div>Professional development opportunities</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-check"></i>
+                        <div>Flexible work arrangements</div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-check"></i>
+                        <div>Cutting-edge technology and tools</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Salary -->
+                <div class="sidebar-section" data-aos="fade-left">
+                    <div class="salary-badge">
+                        <div class="salary-label">Annual Salary</div>
+                        <div class="salary-value" id="jobSalary">$120,000</div>
+                    </div>
+                </div>
+
+                <!-- Company Info -->
+                <div class="sidebar-section" data-aos="fade-left" data-aos-delay="100">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-building"></i> Company
+                    </h3>
+                    <div class="company-info">
+                        <div class="company-name">Tech Corporation</div>
+                        <div class="company-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <span>(4.8/5)</span>
+                        </div>
+                    </div>
+                    <p style="margin-top: 12px; color: #666; font-size: 0.9rem;">
+                        Leading technology company focused on AI innovation and digital transformation.
+                    </p>
+                </div>
+
+                <!-- Quick Facts -->
+                <div class="sidebar-section" data-aos="fade-left" data-aos-delay="200">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-lightbulb"></i> Quick Facts
+                    </h3>
+                    <div class="list-item">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <strong>Company Size:</strong><br>
+                            <span style="color: #666; font-size: 0.9rem;">500+ employees</span>
+                        </div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-globe"></i>
+                        <div>
+                            <strong>Industry:</strong><br>
+                            <span style="color: #666; font-size: 0.9rem;">Technology</span>
+                        </div>
+                    </div>
+                    <div class="list-item">
+                        <i class="fas fa-chart-line"></i>
+                        <div>
+                            <strong>Growth:</strong><br>
+                            <span style="color: #666; font-size: 0.9rem;">Rapidly Growing</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share -->
+                <div class="sidebar-section" data-aos="fade-left" data-aos-delay="300">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-share-nodes"></i> Share This Job
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px;">
+                        <button style="padding: 12px; background: #3b5998; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem; transition: all 0.3s ease;" title="Facebook">
+                            <i class="fab fa-facebook"></i>
+                        </button>
+                        <button style="padding: 12px; background: #1DA1F2; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem; transition: all 0.3s ease;" title="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </button>
+                        <button style="padding: 12px; background: #0077b5; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem; transition: all 0.3s ease;" title="LinkedIn">
+                            <i class="fab fa-linkedin"></i>
+                        </button>
+                        <button style="padding: 12px; background: #ea4c89; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem; transition: all 0.3s ease;" title="Email">
+                            <i class="fas fa-envelope"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100
+        });
+         fetch('../components/navbar.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('navbar-container').innerHTML = html;
+
+                // ✅ Dropdown — ต้อง bind หลัง inject
+                const userBtn  = document.getElementById('userBtn');
+                const userMenu = document.getElementById('userMenu');
+
+                userBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const open = !userMenu.classList.contains('hidden');
+                    userMenu.classList.toggle('hidden', open);
+                    userBtn.setAttribute('aria-expanded', String(!open));
+                });
+
+                document.addEventListener('click', () => {
+                    userMenu.classList.add('hidden');
+                    userBtn.setAttribute('aria-expanded', 'false');
+                });
+
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') {
+                        userMenu.classList.add('hidden');
+                        userBtn.setAttribute('aria-expanded', 'false');
+                        userBtn.focus();
+                    }
+                });
+
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    localStorage.removeItem('user');
+                    window.location.href = '/pages/login.html';
+                });
+
+                // ✅ User info
+                try {
+                    const user = JSON.parse(localStorage.getItem('user') || '{"name":"Guest"}');
+                    document.getElementById('userName').textContent = user.name || 'Guest';
+                    document.getElementById('userInitial').textContent =
+                        (user.initials || user.name || 'G').charAt(0).toUpperCase();
+                    if (user.color) userBtn.style.background = user.color;
+                } catch(e) {}
+            });
+        // User menu
+        document.getElementById('userBtn').addEventListener('click', function() {
+            const menu = document.getElementById('userMenu');
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('userMenu');
+            const userBtn = document.getElementById('userBtn');
+            if (!event.target.closest('.navbar-user')) {
+                userMenu.classList.add('hidden');
+            }
+        });
+
+        // Load user info
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{"name":"Guest","initials":"G"}');
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userInitial').textContent = user.initials || user.name.charAt(0).toUpperCase();
+        }
+
+        // Load job details from URL parameters
+        function loadJobDetails() {
+            const params = new URLSearchParams(window.location.search);
+            const jobId = params.get('id');
+
+            // Mock job data
+            const jobs = {
+                1: {
+                    title: "Senior AI Engineer",
+                    company: "Tech Corporation",
+                    location: "Bangkok, Thailand",
+                    type: "Full-time",
+                    salary: "$120,000",
+                    posted: "2 days ago",
+                    applicants: "24"
+                },
+                // Add more jobs as needed
+            };
+
+            const job = jobs[jobId] || jobs[1];
+            document.getElementById('jobTitle').textContent = job.title;
+            document.getElementById('jobCompany').textContent = job.company;
+            document.getElementById('jobLocation').textContent = job.location;
+            document.getElementById('jobType').textContent = job.type;
+            document.getElementById('jobSalary').textContent = job.salary;
+            document.getElementById('jobPosted').textContent = job.posted;
+            document.getElementById('jobApplicants').textContent = job.applicants;
+        }
+
+        loadUserInfo();
+        loadJobDetails();
+    </script>
+</body>
+</html>

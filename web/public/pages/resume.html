@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analyzer</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary:        #4338ca;
+            --primary-hover:  #3730a3;
+            --primary-light:  #eef2ff;
+            --primary-mid:    #6366f1;
+            --accent:         #6366f1;
+            --text-primary:   #0f172a;
+            --text-secondary: #475569;
+            --text-muted:     #94a3b8;
+            --surface:        #ffffff;
+            --bg:             #f8faff;
+            --bg-hero:        linear-gradient(160deg,#eef2ff 0%,#f0f4ff 40%,#ffffff 100%);
+            --border:         #e2e8f0;
+            --border-strong:  #c7d2fe;
+            --shadow-sm:      0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+            --shadow-md:      0 4px 16px rgba(67,56,202,.10), 0 2px 6px rgba(15,23,42,.05);
+            --shadow-lg:      0 12px 32px rgba(67,56,202,.14), 0 4px 12px rgba(15,23,42,.06);
+            --radius-sm:      8px;
+            --radius-md:      12px;
+            --radius-lg:      20px;
+            --radius-xl:      28px;
+            --font:           'Plus Jakarta Sans', system-ui, sans-serif;
+            --transition:     200ms cubic-bezier(.4,0,.2,1);
+        }
+ 
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; scroll-behavior: smooth; }
+ 
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="navbar-container"></div>
+    <div class="container" data-aos="fade-up" data-aos-duration="800">
+        <header class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">Smart Resume Review</p>
+                <h1>AI Resume Analyzer</h1>
+                <p class="hero-text">Upload your resume, choose the job type, and receive clear feedback for job fit, strengths, weaknesses, and improvement suggestions.</p>
+            </div>
+            <div class="hero-actions">
+                <label for="langSelect">Language / ภาษา</label>
+                <select id="langSelect">
+                    <option value="en">English</option>
+                    <option value="th">ไทย</option>
+                </select>
+            </div>
+        </header>
+
+        <section class="form-card">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="resume">Resume PDF</label>
+                    <input type="file" id="resume" accept=".pdf">
+                </div>
+                <div class="form-group">
+                    <label for="jobTitle">Job Title</label>
+                    <input type="text" id="jobTitle" placeholder="AI Engineer">
+                </div>
+                <div class="form-group">
+                    <label for="jobType">Job Type</label>
+                    <select id="jobType">
+                        <option value="">Select job type (optional)</option>
+                        <option value="software_engineer">Software Engineer</option>
+                        <option value="data_scientist">Data Scientist</option>
+                        <option value="ml_engineer">ML Engineer</option>
+                        <option value="ai_research">AI Research</option>
+                        <option value="internship">Internship</option>
+                    </select>
+                </div>
+                <div class="form-group form-checkbox">
+                    <input type="checkbox" id="isNewGrad">
+                    <label for="isNewGrad">I am a new graduate</label>
+                </div>
+            </div>
+            <button id="analyzeBtn" type="button">Analyze Resume</button>
+        </section>
+
+        <section id="result" class="result"></section>
+    </div>
+
+    <script src="/js/ResumeReview.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+         fetch('../components/navbar.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('navbar-container').innerHTML = html;
+
+                // ✅ Dropdown — ต้อง bind หลัง inject
+                const userBtn  = document.getElementById('userBtn');
+                const userMenu = document.getElementById('userMenu');
+                const path = window.location.pathname;
+                document.querySelectorAll('.nav-menu a').forEach(a => {
+                    const href = a.getAttribute('href');
+                    if (href === path || (href !== '/' && path.includes(href))) {
+                        a.setAttribute('aria-current', 'page');
+                    }
+                });
+                userBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const open = !userMenu.classList.contains('hidden');
+                    userMenu.classList.toggle('hidden', open);
+                    userBtn.setAttribute('aria-expanded', String(!open));
+                });
+
+                document.addEventListener('click', () => {
+                    userMenu.classList.add('hidden');
+                    userBtn.setAttribute('aria-expanded', 'false');
+                });
+
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') {
+                        userMenu.classList.add('hidden');
+                        userBtn.setAttribute('aria-expanded', 'false');
+                        userBtn.focus();
+                    }
+                });
+
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    localStorage.removeItem('user');
+                    window.location.href = '/pages/login.html';
+                });
+
+                // ✅ User info
+                try {
+                    const user = JSON.parse(localStorage.getItem('user') || '{"name":"Guest"}');
+                    document.getElementById('userName').textContent = user.name || 'Guest';
+                    document.getElementById('userInitial').textContent =
+                        (user.initials || user.name || 'G').charAt(0).toUpperCase();
+                    if (user.color) userBtn.style.background = user.color;
+                } catch(e) {}
+            });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Resume AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Inter, Arial, sans-serif;
+            background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+            width: min(420px, calc(100% - 32px));
+            padding: 48px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .login-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: #475569;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            color: #111827;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4338ca;
+            box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 16px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(67, 56, 202, 0.3);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .social-login {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .social-btn {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 0;
+        }
+
+        .social-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 0.9rem;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .success {
+            background: #dbeafe;
+            border-color: #0284c7;
+        }
+
+        .success:focus {
+            border-color: #0284c7;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">🤖</div>
+            <h1 class="login-title">Resume AI</h1>
+            <p class="login-subtitle">Welcome back! Set up your profile.</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="firstName">First Name</label>
+                <input type="text" id="firstName" required placeholder="John">
+                <div class="error-message" id="firstNameError">Please enter your first name</div>
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <input type="text" id="lastName" required placeholder="Doe">
+                <div class="error-message" id="lastNameError">Please enter your last name</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required placeholder="john@example.com">
+                <div class="error-message" id="emailError">Please enter a valid email</div>
+            </div>
+
+            <button type="submit">Get Started</button>
+
+            <div class="divider">or continue with</div>
+
+            <div class="social-login">
+                <button type="button" class="social-btn" onclick="loginWithGoogle()">Google</button>
+                <button type="button" class="social-btn" onclick="loginWithGithub()">GitHub</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+
+            // Validation
+            let isValid = true;
+
+            if (!firstName) {
+                document.getElementById('firstNameError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('firstNameError').style.display = 'none';
+            }
+
+            if (!lastName) {
+                document.getElementById('lastNameError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('lastNameError').style.display = 'none';
+            }
+
+            if (!email || !email.includes('@')) {
+                document.getElementById('emailError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('emailError').style.display = 'none';
+            }
+
+            if (isValid) {
+                const user = {
+                    name: `${firstName} ${lastName}`,
+                    email: email,
+                    initials: `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase(),
+                    createdAt: new Date().toISOString()
+                };
+
+                localStorage.setItem('user', JSON.stringify(user));
+                window.location.href = '/';
+            }
+        });
+
+        function loginWithGoogle() {
+            alert('Google login would be integrated here');
+        }
+
+        function loginWithGithub() {
+            alert('GitHub login would be integrated here');
+        }
+
+        // Check if user already logged in
+        if (localStorage.getItem('user')) {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
