@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Analysis – Resume AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary:        #4338ca;
+      --primary-hover:  #3730a3;
+      --primary-light:  #eef2ff;
+      --primary-mid:    #6366f1;
+      --border:         #e2e8f0;
+      --border-strong:  #c7d2fe;
+      --text-primary:   #0f172a;
+      --text-secondary: #475569;
+      --text-muted:     #94a3b8;
+      --surface:        #ffffff;
+      --bg:             #f8faff;
+      --shadow-sm:      0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+      --shadow-md:      0 4px 16px rgba(67,56,202,.10), 0 2px 6px rgba(15,23,42,.05);
+      --shadow-lg:      0 12px 32px rgba(67,56,202,.14), 0 4px 12px rgba(15,23,42,.06);
+      --radius-md:      12px;
+      --radius-lg:      20px;
+      --font:           'Plus Jakarta Sans', system-ui, sans-serif;
+      --transition:     200ms cubic-bezier(.4,0,.2,1);
+      --nav-h:          64px;
+      --subnav-h:       52px;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { font-size:16px; scroll-behavior:smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── SKIP LINK ── */
+    .skip-link {
+      position:absolute; top:-100%; left:8px;
+      background:var(--primary); color:#fff;
+      padding:8px 16px; border-radius:0 0 8px 8px;
+      font-weight:600; font-size:.875rem; text-decoration:none; z-index:9999;
+      transition:top .2s;
+    }
+    .skip-link:focus { top:0; }
+
+    /* ══════════════════════════════════════
+       PRIMARY NAV  (same as index.html)
+    ══════════════════════════════════════ */
+    .main-nav {
+      background: linear-gradient(135deg,#4338ca 0%,#5b52e0 50%,#6366f1 100%);
+      position: sticky; top:0; z-index:200;
+      box-shadow: 0 2px 12px rgba(67,56,202,.25);
+    }
+    .nav-wrap {
+      max-width:1200px; margin:0 auto;
+      padding:0 24px; height:var(--nav-h);
+      display:flex; align-items:center; gap:32px;
+    }
+    .nav-logo {
+      display:flex; align-items:center; gap:10px;
+      text-decoration:none; color:#fff;
+      font-weight:800; font-size:1.125rem;
+      letter-spacing:-.02em; flex-shrink:0;
+    }
+    .nav-logo-icon {
+      width:36px; height:36px;
+      background:rgba(255,255,255,.18); border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      transition:background var(--transition);
+    }
+    .nav-logo:hover .nav-logo-icon { background:rgba(255,255,255,.28); }
+    .nav-logo-icon svg { width:20px; height:20px; }
+    .nav-menu {
+      display:flex; gap:4px; list-style:none; flex:1;
+    }
+    .nav-menu a {
+      color:rgba(255,255,255,.80); text-decoration:none;
+      font-weight:500; font-size:.9rem;
+      padding:8px 14px; border-radius:8px;
+      display:flex; align-items:center; min-height:40px;
+      transition:background var(--transition), color var(--transition);
+    }
+    .nav-menu a:hover,
+    .nav-menu a[aria-current="page"] {
+      background:rgba(255,255,255,.18); color:#fff;
+    }
+    .nav-menu a:focus-visible { outline:2px solid rgba(255,255,255,.8); outline-offset:2px; }
+    .nav-user { position:relative; margin-left:auto; }
+    .user-avatar-btn {
+      width:44px; height:44px; border-radius:50%;
+      background:rgba(255,255,255,.2);
+      border:2px solid rgba(255,255,255,.35);
+      color:#fff; font-weight:700; font-size:1rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:background var(--transition); touch-action:manipulation;
+    }
+    .user-avatar-btn:hover { background:rgba(255,255,255,.32); }
+    .user-avatar-btn:focus-visible { outline:3px solid rgba(255,255,255,.8); outline-offset:2px; }
+    .user-dropdown {
+      position:absolute; top:calc(100% + 10px); right:0;
+      background:#fff; border:1px solid var(--border);
+      border-radius:var(--radius-md);
+      box-shadow:0 8px 32px rgba(15,23,42,.14);
+      min-width:210px; overflow:hidden; z-index:999;
+      animation:dropIn .18s ease;
+    }
+    @keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .user-dropdown.hidden { display:none; }
+    .dropdown-header {
+      padding:14px 16px 12px; border-bottom:1px solid var(--border);
+      font-size:.8125rem; color:var(--text-muted);
+    }
+    .dropdown-header strong {
+      display:block; color:var(--text-primary);
+      font-weight:700; font-size:.9375rem; margin-top:2px;
+    }
+    .dropdown-item {
+      display:flex; align-items:center; gap:10px;
+      width:100%; padding:11px 16px; border:none; background:none;
+      color:var(--text-secondary); text-decoration:none; cursor:pointer;
+      font-size:.9rem; font-family:var(--font); text-align:left;
+      transition:background var(--transition), color var(--transition);
+      min-height:44px;
+    }
+    .dropdown-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+    .dropdown-item:hover { background:var(--primary-light); color:var(--primary); }
+    .dropdown-item:hover svg { opacity:1; }
+    .dropdown-item:focus-visible { outline:2px solid var(--primary); outline-offset:-2px; }
+    .dropdown-item.logout { color:#dc2626; }
+    .dropdown-item.logout:hover { background:#fef2f2; }
+    .dropdown-divider { height:1px; background:var(--border); margin:4px 0; }
+
+    /* ══════════════════════════════════════
+       SUB-NAV  — matches primary nav style
+    ══════════════════════════════════════ */
+    .sub-nav {
+      position: sticky;
+      top: var(--nav-h);
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1.5px solid var(--border);
+      box-shadow: 0 2px 8px rgba(15,23,42,.04);
+    }
+    .sub-nav-inner {
+      max-width:1200px; margin:0 auto;
+      padding:0 24px;
+      height: var(--subnav-h);
+      display:flex; align-items:center; gap:4px;
+      overflow-x:auto; scrollbar-width:none;
+    }
+    .sub-nav-inner::-webkit-scrollbar { display:none; }
+
+    .sub-nav-btn {
+      display:flex; align-items:center; gap:7px;
+      border:none; background:transparent;
+      padding:8px 16px; border-radius:8px;
+      cursor:pointer; font-weight:600; font-size:.875rem;
+      color:var(--text-secondary); font-family:var(--font);
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap; min-height:36px; flex-shrink:0;
+      touch-action:manipulation;
+    }
+    .sub-nav-btn svg { width:15px; height:15px; flex-shrink:0; opacity:.6; transition:opacity var(--transition); }
+    .sub-nav-btn:hover { background:var(--primary-light); color:var(--primary); }
+    .sub-nav-btn:hover svg { opacity:1; }
+    .sub-nav-btn:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+    .sub-nav-btn.active {
+      background:var(--primary-light);
+      color:var(--primary);
+      font-weight:700;
+      box-shadow: inset 0 0 0 1.5px var(--border-strong);
+    }
+    .sub-nav-btn.active svg { opacity:1; }
+
+    /* active indicator bar */
+    .sub-nav-btn.active { position:relative; }
+    .sub-nav-btn.active::after {
+      content:'';
+      position:absolute;
+      bottom:-1px; left:8px; right:8px;
+      height:2px;
+      background:var(--primary);
+      border-radius:2px 2px 0 0;
+    }
+
+    /* ── LAYOUT ── */
+    .page-wrap {
+      max-width:1200px; margin:0 auto;
+      padding:40px 24px 64px;
+    }
+
+    /* ── HERO ── */
+    .page-hero {
+      margin-bottom:40px;
+    }
+    .hero-eyebrow {
+      display:inline-flex; align-items:center; gap:6px;
+      background:var(--primary-light); color:var(--primary);
+      border:1px solid var(--border-strong);
+      padding:5px 13px; border-radius:100px;
+      font-size:.75rem; font-weight:700;
+      letter-spacing:.08em; text-transform:uppercase;
+      margin-bottom:16px;
+    }
+    .hero-eyebrow-dot {
+      width:6px; height:6px; border-radius:50%;
+      background:var(--primary-mid);
+      animation:blink 2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .page-hero h1 {
+      font-size:clamp(1.75rem,3.5vw,2.75rem);
+      font-weight:800; letter-spacing:-.03em; line-height:1.1;
+      margin-bottom:12px;
+    }
+    .page-hero p {
+      font-size:1rem; color:var(--text-secondary);
+      max-width:600px; line-height:1.7; font-weight:400;
+    }
+
+    /* ── ANALYZE BUTTON ── */
+    .analyze-wrap {
+      display:flex; justify-content:flex-start;
+      margin-bottom:32px;
+    }
+    .analyze-btn {
+      display:inline-flex; align-items:center; gap:8px;
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-mid) 100%);
+      color:#fff; border:none; border-radius:var(--radius-md);
+      padding:13px 28px; font-weight:700; font-size:.9375rem;
+      cursor:pointer; font-family:var(--font);
+      transition:all var(--transition);
+      box-shadow:0 4px 14px rgba(67,56,202,.28);
+      min-height:48px; touch-action:manipulation;
+    }
+    .analyze-btn:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(67,56,202,.38); }
+    .analyze-btn:active { transform:translateY(0); transition-duration:80ms; }
+    .analyze-btn:focus-visible { outline:3px solid var(--primary); outline-offset:3px; }
+    .analyze-btn svg { width:17px; height:17px; }
+
+    /* ── LOADING ── */
+    .loading {
+      display:flex; flex-direction:column; align-items:center;
+      gap:16px; padding:56px 24px;
+      color:var(--text-secondary); font-weight:500;
+    }
+    .spinner {
+      width:44px; height:44px;
+      border:3px solid var(--border);
+      border-top-color:var(--primary);
+      border-radius:50%;
+      animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ── SUMMARY CARD ── */
+    .summary-card {
+      background:var(--surface);
+      border:1.5px solid var(--border-strong);
+      border-radius:var(--radius-lg);
+      padding:28px 32px;
+      margin-bottom:24px;
+      box-shadow:var(--shadow-md);
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .summary-card-head {
+      display:flex; align-items:center; gap:10px;
+    }
+    .summary-icon {
+      width:36px; height:36px; border-radius:9px;
+      background:var(--primary-light); border:1px solid var(--border-strong);
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .summary-icon svg { width:18px; height:18px; color:var(--primary); }
+    .summary-card h2 { font-size:1.0625rem; font-weight:800; letter-spacing:-.02em; }
+    .summary-card p { color:var(--text-secondary); font-size:.9375rem; line-height:1.7; }
+
+    /* ── GRID CARDS ── */
+    .cards-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:20px;
+    }
+    @media(max-width:900px) { .cards-grid { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:580px) { .cards-grid { grid-template-columns:1fr; } }
+
+    .info-card {
+      background:var(--surface);
+      border:1.5px solid var(--border);
+      border-radius:var(--radius-lg);
+      padding:24px;
+      box-shadow:var(--shadow-sm);
+      display:flex; flex-direction:column; gap:16px;
+      transition:border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+    }
+    .info-card:hover {
+      border-color:var(--border-strong);
+      box-shadow:var(--shadow-md);
+      transform:translateY(-2px);
+    }
+    .card-head {
+      display:flex; align-items:center; gap:10px;
+    }
+    .card-icon {
+      width:34px; height:34px; border-radius:8px;
+      background:var(--primary-light); border:1px solid var(--border-strong);
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .card-icon svg { width:16px; height:16px; color:var(--primary); }
+    .info-card h3 { font-size:.9375rem; font-weight:700; letter-spacing:-.01em; }
+    .info-card ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+    .info-card li {
+      display:flex; align-items:flex-start; gap:8px;
+      padding:9px 12px;
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-radius:8px;
+      font-size:.875rem; color:var(--text-secondary); line-height:1.5;
+      transition:background var(--transition), border-color var(--transition);
+    }
+    .info-card li::before {
+      content:'';
+      width:6px; height:6px; border-radius:50%;
+      background:var(--primary-mid); flex-shrink:0; margin-top:5px;
+    }
+    .info-card li:hover { background:var(--primary-light); border-color:var(--border-strong); }
+
+    /* ── PLACEHOLDER SECTIONS ── */
+    .placeholder-section {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; gap:16px;
+      padding:80px 24px; text-align:center;
+      background:var(--surface); border:1.5px dashed var(--border);
+      border-radius:var(--radius-lg);
+    }
+    .placeholder-section svg { width:48px; height:48px; color:var(--text-muted); }
+    .placeholder-section h3 { font-size:1.125rem; font-weight:700; color:var(--text-secondary); }
+    .placeholder-section p { font-size:.9rem; color:var(--text-muted); max-width:360px; }
+
+    /* hidden */
+    .tab-section { display:block; }
+    .tab-section.hidden { display:none; }
+    .is-hidden { display:none; }
+
+    /* ── RESPONSIVE NAV ── */
+    @media(max-width:768px) {
+      .nav-menu { display:none; }
+      .nav-wrap { padding:0 16px; gap:16px; }
+      .sub-nav-inner { padding:0 16px; }
+      .page-wrap { padding:32px 16px 56px; }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- ══════════ PRIMARY NAV (shared component) ══════════ -->
+  <div id="navbar-placeholder"></div>
+  <script src="/js/navbar.js"></script>
+
+  <!-- ══════════ SUB-NAV ══════════ -->
+  <div class="sub-nav" role="navigation" aria-label="Section navigation" data-aos="fade-down" data-aos-duration="600">
+    <div class="sub-nav-inner" role="tablist">
+      <button class="sub-nav-btn active" data-tab="technology" role="tab" aria-selected="true" aria-controls="technologySection">
+        <svg viewBox="0 0 15 15" fill="none" aria-hidden="true"><rect x="1" y="3" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 7h5M7.5 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Technology
+      </button>
+      <button class="sub-nav-btn" data-tab="market" role="tab" aria-selected="false" aria-controls="marketSection">
+        <svg viewBox="0 0 15 15" fill="none" aria-hidden="true"><path d="M2 11l3-4 3 2 3-5 2 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Job Market
+      </button>
+      <button class="sub-nav-btn" data-tab="github" role="tab" aria-selected="false" aria-controls="githubSection">
+        <svg viewBox="0 0 15 15" fill="none" aria-hidden="true"><path fill-rule="evenodd" d="M7.5 1a6.5 6.5 0 100 13A6.5 6.5 0 007.5 1zm-1 9.25c0 .414.084.75.25.75.166 0 .25-.336.25-.75V8.5c0-.414-.084-.75-.25-.75-.166 0-.25.336-.25.75v1.75zm1-4.25a.75.75 0 100-1.5.75.75 0 000 1.5z" fill="currentColor" opacity=".6"/></svg>
+        GitHub Trends
+      </button>
+      <button class="sub-nav-btn" data-tab="news" role="tab" aria-selected="false" aria-controls="newsSection">
+        <svg viewBox="0 0 15 15" fill="none" aria-hidden="true"><rect x="1.5" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M4 5h7M4 7.5h7M4 10h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        News Feed
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════ MAIN CONTENT ══════════ -->
+  <main id="main" class="page-wrap">
+
+    <!-- TECHNOLOGY TAB -->
+    <section id="technologySection" class="tab-section" role="tabpanel" aria-labelledby="tab-technology">
+
+      <div class="page-hero" data-aos="fade-right" data-aos-offset="400" data-aos-easing="ease-in-sine">
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-dot" aria-hidden="true"></span>
+          Real-time Insights
+        </div>
+        <h1>AI Market &amp; Tech Analysis</h1>
+        <p>Get real-time insights into job market trends, in-demand skills, and salary benchmarks to make informed career decisions.</p>
+      </div>
+
+      <div class="analyze-wrap" data-aos="fade-up" data-aos-duration="800">
+        <button id="analyzeBtn" class="analyze-btn" type="button">
+          <svg viewBox="0 0 17 17" fill="none" aria-hidden="true">
+            <circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M13 13l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M5.5 7.5h4M7.5 5.5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Analyze Market
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div id="loading" class="loading is-hidden" role="status" aria-live="polite" aria-label="Analyzing market trends">
+        <div class="spinner" aria-hidden="true"></div>
+        <span>Analyzing latest market trends…</span>
+      </div>
+
+      <!-- Results -->
+      <div id="resultContainer" class="is-hidden">
+        <div class="summary-card" role="region" aria-label="Market summary">
+          <div class="summary-card-head">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none"><path d="M2 13l4-5 4 3 4-7 3 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h2>Market Summary</h2>
+          </div>
+          <p id="marketSummary"></p>
+        </div>
+
+        <div class="cards-grid">
+          <div class="info-card">
+            <div class="card-head">
+              <div class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              </div>
+              <h3>Emerging Technologies</h3>
+            </div>
+            <ul id="emergingTech" aria-label="Emerging technologies list"></ul>
+          </div>
+
+          <div class="info-card">
+            <div class="card-head">
+              <div class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+              </div>
+              <h3>Popular Tools</h3>
+            </div>
+            <ul id="popularTools" aria-label="Popular tools list"></ul>
+          </div>
+
+          <div class="info-card">
+            <div class="card-head">
+              <div class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 13.5c0-3.038 2.462-5.5 5.5-5.5s5.5 2.462 5.5 5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              </div>
+              <h3>AI Engineer</h3>
+            </div>
+            <ul id="aiEngineer" aria-label="AI engineer relevant skills"></ul>
+          </div>
+
+          <div class="info-card">
+            <div class="card-head">
+              <div class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M8 2l1.2 3.6H13l-3 2.2 1.1 3.6L8 9l-3.1 2.4 1.1-3.6-3-2.2h3.8z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
+              </div>
+              <h3>Student Focus</h3>
+            </div>
+            <ul id="studentRelevant" aria-label="Student-relevant skills"></ul>
+          </div>
+
+          <div class="info-card">
+            <div class="card-head">
+              <div class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M3 5h10M3 11h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Recommended Skills</h3>
+            </div>
+            <ul id="recommendedSkills" aria-label="Recommended skills list"></ul>
+          </div>
+
+
+        </div>
+      </div>
+    </section>
+
+    <!-- JOB MARKET TAB -->
+    <section id="marketSection" class="tab-section hidden" role="tabpanel" aria-labelledby="tab-market">
+      <div class="placeholder-section">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M6 40l10-14 10 8 10-16 6 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 44h44" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <h3>Job Market</h3>
+        <p>Job market data and salary benchmarks are coming soon.</p>
+      </div>
+    </section>
+
+    <!-- GITHUB TRENDS TAB -->
+    <section id="githubSection" class="tab-section hidden" role="tabpanel" aria-labelledby="tab-github">
+      <div class="placeholder-section">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path fill-rule="evenodd" d="M24 4C13 4 4 13 4 24c0 8.84 5.73 16.33 13.67 18.97 1 .18 1.37-.43 1.37-.97v-3.4c-5.56 1.21-6.73-2.68-6.73-2.68-.91-2.31-2.22-2.93-2.22-2.93-1.81-1.24.14-1.21.14-1.21 2 .14 3.05 2.05 3.05 2.05 1.78 3.04 4.67 2.16 5.81 1.65.18-1.29.7-2.16 1.27-2.66-4.44-.5-9.1-2.22-9.1-9.88 0-2.18.78-3.97 2.05-5.37-.2-.5-.89-2.54.2-5.3 0 0 1.68-.54 5.5 2.05A19.1 19.1 0 0124 11.7c1.7.01 3.41.23 5.01.67 3.81-2.59 5.49-2.05 5.49-2.05 1.09 2.76.4 4.8.2 5.3 1.28 1.4 2.05 3.19 2.05 5.37 0 7.68-4.67 9.37-9.12 9.86.71.62 1.35 1.83 1.35 3.69v5.48c0 .54.36 1.16 1.38.97C38.28 40.32 44 32.83 44 24 44 13 35 4 24 4z" fill="currentColor" opacity=".25"/></svg>
+        <h3>GitHub Trends</h3>
+        <p>Trending repositories and open-source activity are coming soon.</p>
+      </div>
+    </section>
+
+    <!-- NEWS FEED TAB -->
+    <section id="newsSection" class="tab-section hidden" role="tabpanel" aria-labelledby="tab-news">
+      <div class="placeholder-section">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="4" y="8" width="40" height="32" rx="3" stroke="currentColor" stroke-width="2.5"/><path d="M4 16h40M14 24h20M14 30h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <h3>News Feed</h3>
+        <p>Tech and career news will be curated here soon.</p>
+      </div>
+    </section>
+
+  </main>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    /* ── navbar.js handles: userBtn, userMenu, logout, loadUserInfo ── */
+
+    document.addEventListener('DOMContentLoaded', () => {
+      AOS.init({ once: true, offset: 120 });
+      /* ── SUB-NAV TABS ── */
+      const tabMap = {
+        technology: 'technologySection',
+        market:     'marketSection',
+        github:     'githubSection',
+        news:       'newsSection',
+      };
+
+      document.querySelectorAll('.sub-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.sub-nav-btn').forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+          });
+          btn.classList.add('active');
+          btn.setAttribute('aria-selected', 'true');
+
+          Object.values(tabMap).forEach(id => {
+            document.getElementById(id)?.classList.add('hidden');
+          });
+          const target = tabMap[btn.dataset.tab];
+          if (target) document.getElementById(target)?.classList.remove('hidden');
+        });
+      });
+
+      /* ── ANALYZE ── */
+      document.getElementById('analyzeBtn')?.addEventListener('click', async () => {
+        const loading = document.getElementById('loading');
+        const result  = document.getElementById('resultContainer');
+
+        loading.classList.remove('is-hidden');
+        result.classList.add('is-hidden');
+
+        try {
+          const response = await fetch('http://127.0.0.1:8000/analyze-market', { method: 'POST' });
+          const data = await response.json();
+
+          document.getElementById('marketSummary').textContent = data.market_summary || '';
+          renderList('emergingTech',      data.top_emerging_technologies);
+          renderList('popularTools',      data.popular_tools);
+          renderList('aiEngineer',        data.ai_engineer_relevant);
+          renderList('studentRelevant',   data.student_relevant);
+          renderList('recommendedSkills', data.recommended_skills);
+
+          result.classList.remove('is-hidden');
+        } catch(err) {
+          alert('Failed to analyze market. Please try again.');
+          console.error(err);
+        } finally {
+          loading.classList.add('is-hidden');
+        }
+      });
+
+      function renderList(id, items = []) {
+        const ul = document.getElementById(id);
+        if (!ul) return;
+        ul.innerHTML = items.map(item => `<li>${item}</li>`).join('');
+      }
+
+    }); // end DOMContentLoaded
+  </script>
+</body>
+</html>

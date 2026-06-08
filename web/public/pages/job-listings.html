@@ -355,9 +355,8 @@
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to main content</a>
-
-    <!-- Shared navbar -->
-    <div id="navbar-container"></div>
+    <div id="navbar-placeholder"></div>
+    <script src="/js/navbar.js"></script>
 
     <section class="hero-section" aria-labelledby="page-title">
         <div class="hero-badge" data-aos="fade-up" data-aos-duration="800">
@@ -533,57 +532,7 @@
         document.getElementById('locationFilter').addEventListener('change', filterJobs);
         document.getElementById('typeFilter').addEventListener('change', filterJobs);
 
-        // Load shared navbar
-         fetch('../components/navbar.html')
-            .then(r => r.text())
-            .then(html => {
-                document.getElementById('navbar-container').innerHTML = html;
-
-                // ✅ Dropdown — ต้อง bind หลัง inject
-                const userBtn  = document.getElementById('userBtn');
-                const userMenu = document.getElementById('userMenu');
-                const path = window.location.pathname;
-                document.querySelectorAll('.nav-menu a').forEach(a => {
-                    const href = a.getAttribute('href');
-                    if (href === path || (href !== '/' && path.includes(href))) {
-                        a.setAttribute('aria-current', 'page');
-                    }
-                });
-                userBtn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const open = !userMenu.classList.contains('hidden');
-                    userMenu.classList.toggle('hidden', open);
-                    userBtn.setAttribute('aria-expanded', String(!open));
-                });
-
-                document.addEventListener('click', () => {
-                    userMenu.classList.add('hidden');
-                    userBtn.setAttribute('aria-expanded', 'false');
-                });
-
-                document.addEventListener('keydown', e => {
-                    if (e.key === 'Escape') {
-                        userMenu.classList.add('hidden');
-                        userBtn.setAttribute('aria-expanded', 'false');
-                        userBtn.focus();
-                    }
-                });
-
-                document.getElementById('logoutBtn').addEventListener('click', () => {
-                    localStorage.removeItem('user');
-                    window.location.href = '/pages/login.html';
-                });
-
-                // ✅ User info
-                try {
-                    const user = JSON.parse(localStorage.getItem('user') || '{"name":"Guest"}');
-                    document.getElementById('userName').textContent = user.name || 'Guest';
-                    document.getElementById('userInitial').textContent =
-                        (user.initials || user.name || 'G').charAt(0).toUpperCase();
-                    if (user.color) userBtn.style.background = user.color;
-                } catch(e) {}
-            });
-
+    
         displayJobs(allJobs);
     </script>
 </body>

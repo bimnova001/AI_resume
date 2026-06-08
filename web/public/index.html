@@ -454,54 +454,8 @@
 <body>
   <a href="#main" class="skip-link">Skip to main content</a>
 
-  <!-- NAV -->
-  <nav role="navigation" aria-label="Main navigation">
-    <div class="nav-wrap">
-      <a href="/" class="nav-logo" aria-label="Resume AI — Home">
-        <div class="nav-logo-icon" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="3" width="6" height="6" rx="1.5" fill="white"/>
-            <rect x="11" y="3" width="6" height="6" rx="1.5" fill="white" opacity=".55"/>
-            <rect x="3" y="11" width="6" height="6" rx="1.5" fill="white" opacity=".55"/>
-            <rect x="11" y="11" width="6" height="6" rx="1.5" fill="white"/>
-          </svg>
-        </div>
-        <span class="logo-text">Resume AI</span>
-      </a>
-
-      <ul class="nav-menu" role="list">
-        <li><a href="/" aria-current="page">Home</a></li>
-        <li><a href="/pages/job-listings.html">Jobs</a></li>
-        <li><a href="/pages/resume.html">Analyze Resume</a></li>
-      </ul>
-
-      <div class="nav-user">
-        <button id="userBtn" class="user-avatar-btn"
-                aria-label="Open user menu" aria-haspopup="true" aria-expanded="false">
-          <span id="userInitial" aria-hidden="true">U</span>
-        </button>
-        <div id="userMenu" class="user-dropdown hidden" role="menu" aria-label="User menu">
-          <div class="dropdown-header">
-            Signed in as<strong id="userName">User</strong>
-          </div>
-          <a href="/pages/profile.html" class="dropdown-item" role="menuitem">
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 13c0-2.21 2.239-4 5-4s5 1.79 5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-            Profile
-          </a>
-          <a href="/pages/saved-jobs.html" class="dropdown-item" role="menuitem">
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2h8a1 1 0 011 1v10l-5-3-5 3V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-            Saved Jobs
-          </a>
-          <div class="dropdown-divider" role="separator"></div>
-          <button id="logoutBtn" class="dropdown-item logout" role="menuitem">
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 11l3-3-3-3M13 8H6M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Log out
-          </button>
-        </div>
-      </div>
-    </div>
-  </nav>
-
+  <div id="navbar-placeholder"></div>
+  <script src="/js/navbar.js"></script>
   <main id="main">
     <!-- HERO -->
     <section class="hero-section" aria-labelledby="hero-title">
@@ -641,31 +595,6 @@
         document.getElementById('userInitial').textContent = (u.initials || u.name || 'G').charAt(0).toUpperCase();
       } catch(e) {}
     }
-
-    // User menu
-    const userBtn = document.getElementById('userBtn');
-    const userMenu = document.getElementById('userMenu');
-
-    userBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      const open = !userMenu.classList.contains('hidden');
-      userMenu.classList.toggle('hidden', open);
-      userBtn.setAttribute('aria-expanded', String(!open));
-    });
-
-    document.addEventListener('click', () => {
-      userMenu.classList.add('hidden');
-      userBtn.setAttribute('aria-expanded', 'false');
-    });
-
-    // Keyboard: close on Escape
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        userMenu.classList.add('hidden');
-        userBtn.setAttribute('aria-expanded', 'false');
-        userBtn.focus();
-      }
-    });
 
     renderJobs();
     loadUser();

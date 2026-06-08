@@ -406,8 +406,8 @@
     </style>
 </head>
 <body>
-    <div id="navbar-container"></div>
-
+    <div id="navbar-placeholder"></div>
+    <script src="/js/navbar.js"></script>
     <div class="container">
         <a href="/pages/job-listings.html" class="back-link">
             <i class="fas fa-arrow-left"></i> Back to Jobs
@@ -679,49 +679,6 @@
             once: true,
             offset: 100
         });
-         fetch('../components/navbar.html')
-            .then(r => r.text())
-            .then(html => {
-                document.getElementById('navbar-container').innerHTML = html;
-
-                // ✅ Dropdown — ต้อง bind หลัง inject
-                const userBtn  = document.getElementById('userBtn');
-                const userMenu = document.getElementById('userMenu');
-
-                userBtn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const open = !userMenu.classList.contains('hidden');
-                    userMenu.classList.toggle('hidden', open);
-                    userBtn.setAttribute('aria-expanded', String(!open));
-                });
-
-                document.addEventListener('click', () => {
-                    userMenu.classList.add('hidden');
-                    userBtn.setAttribute('aria-expanded', 'false');
-                });
-
-                document.addEventListener('keydown', e => {
-                    if (e.key === 'Escape') {
-                        userMenu.classList.add('hidden');
-                        userBtn.setAttribute('aria-expanded', 'false');
-                        userBtn.focus();
-                    }
-                });
-
-                document.getElementById('logoutBtn').addEventListener('click', () => {
-                    localStorage.removeItem('user');
-                    window.location.href = '/pages/login.html';
-                });
-
-                // ✅ User info
-                try {
-                    const user = JSON.parse(localStorage.getItem('user') || '{"name":"Guest"}');
-                    document.getElementById('userName').textContent = user.name || 'Guest';
-                    document.getElementById('userInitial').textContent =
-                        (user.initials || user.name || 'G').charAt(0).toUpperCase();
-                    if (user.color) userBtn.style.background = user.color;
-                } catch(e) {}
-            });
         // User menu
         document.getElementById('userBtn').addEventListener('click', function() {
             const menu = document.getElementById('userMenu');

@@ -4,7 +4,7 @@ from llama_cpp import Llama
 llm = Llama.from_pretrained(
 	repo_id="Qwen/Qwen2.5-3B-Instruct-GGUF",
 	filename="qwen2.5-3b-instruct-q4_k_m.gguf",
-    n_ctx=2048,
+    n_ctx=4096,
     n_threads=4,
     verbose=False,
     cache_dir="./model_cache"
@@ -73,4 +73,48 @@ Format:
         temperature=0.0
     )
 
+    return result["choices"][0]["text"]
+
+
+def Market_Analysis(news_data):
+    prompt = f""" 
+    You are a technology market analyst.
+
+    Summarize:  
+
+    1. Top emerging technologies
+    2. Tools gaining popularity
+    3. Technologies relevant to AI Engineer
+    4. Technologies relevant to students
+    5. Recommended skills to learn next
+
+    Data:
+
+    {news_data}
+    
+    IMPORTANT:
+    Return ONLY valid JSON. Do not include any extra text outside the JSON object.
+    Schema:
+
+    {{
+    "top_emerging_technologies": [],
+    "popular_tools": [],
+    "ai_engineer_relevant": [],
+    "student_relevant": [],
+    "recommended_skills": [],
+    "market_summary": ""
+    }}
+    Rules:
+    - Return only JSON
+    - No markdown
+    - No code block
+    - No explanation outside JSON
+    - Arrays must contain strings only
+    """
+    
+    result = llm.create_completion(
+        prompt=prompt,
+        max_tokens=1500,
+        temperature=0.0
+    )
     return result["choices"][0]["text"]
