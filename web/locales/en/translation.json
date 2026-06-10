@@ -1,0 +1,86 @@
+{
+  "nav": {
+    "home": "Home",
+    "jobs": "Jobs",
+    "resume": "Analyze Resume",
+    "market": "Market & Tech",
+    "profile": "Profile",
+    "savedJobs": "Saved Jobs",
+    "logout": "Log out",
+    "signedIn": "Signed in as"
+  },
+  "hero": {
+    "badge": "AI-Powered Career Platform",
+    "title": "Analyze your resume against job descriptions, get AI-powered feedback,and discover the best opportunities matched to your skills.",
+    "sub": "Analyze your resume against job descriptions, get AI-powered feedback, and discover the best opportunities matched to your skills.",
+    "cta": {
+      "analyze": "Analyze Your Resume",
+      "browse": "Browse Jobs"
+    }
+  },
+  "stats": {
+    "resumes": "Resumes Analyzed",
+    "jobs": "Active Jobs",
+    "interview": "Interview Rate",
+    "rating": "User Rating"
+  },
+  "profile": {
+    "editTitle": "Edit Profile",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "bio": "Bio",
+    "bioPh": "Tell us about yourself...",
+    "location": "Location",
+    "jobTitle": "Job Title",
+    "save": "Save Changes",
+    "saved": "Saved!",
+    "settings": "Account Settings",
+    "language": "Preferred Language",
+    "password": "Change Password",
+    "resumes": "Resumes",
+    "savedJobs": "Saved Jobs",
+    "apps": "Applications"
+  },
+  "listings": {
+    "title": "Job Listings",
+    "subtitle": "Find the perfect opportunity that matches your skills",
+    "search": "Search Jobs",
+    "searchPh": "Job title, company...",
+    "location": "Location",
+    "allLoc": "All Locations",
+    "type": "Job Type",
+    "allTypes": "All Types",
+    "noResults": "No jobs found",
+    "noResultsSub": "Try adjusting your search or filters."
+  },
+  "saved": {
+    "title": "Saved Jobs",
+    "subtitle": "Jobs you've bookmarked for later review",
+    "empty": "No Saved Jobs Yet",
+    "emptySub": "Start exploring job listings and save positions that interest you.",
+    "browse": "Browse Jobs"
+  },
+  "market": {
+    "badge": "Real-time Insights",
+    "title": "AI Market & Tech Analysis",
+    "sub": "Get real-time insights into job market trends, in-demand skills, and salary benchmarks.",
+    "analyze": "Analyze Market",
+    "tab": {
+      "tech": "Technology",
+      "market": "Job Market",
+      "github": "GitHub Trends",
+      "news": "News Feed"
+    }
+  },
+  "login": {
+    "title": "Resume AI",
+    "sub": "Welcome! Set up your profile to get started.",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email Address",
+    "cta": "Get Started",
+    "or": "or continue with"
+  }
+}

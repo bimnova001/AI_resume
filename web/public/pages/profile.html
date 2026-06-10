@@ -1,431 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile - Resume AI</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile – Resume AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:#4338ca; --primary-hover:#3730a3; --primary-light:#eef2ff;
+      --primary-mid:#6366f1; --border:#e2e8f0; --border-strong:#c7d2fe;
+      --text-primary:#0f172a; --text-secondary:#475569; --text-muted:#94a3b8;
+      --surface:#ffffff; --bg:#f8faff;
+      --shadow-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+      --shadow-md:0 4px 16px rgba(67,56,202,.10),0 2px 6px rgba(15,23,42,.05);
+      --radius-md:12px; --radius-lg:20px;
+      --font:'Plus Jakarta Sans',system-ui,sans-serif;
+      --transition:200ms cubic-bezier(.4,0,.2,1);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;scroll-behavior:smooth}
+    body{font-family:var(--font);background:var(--bg);color:var(--text-primary);line-height:1.6;-webkit-font-smoothing:antialiased}
+    .skip-link{position:absolute;top:-100%;left:8px;background:var(--primary);color:#fff;padding:8px 16px;border-radius:0 0 8px 8px;font-weight:600;font-size:.875rem;text-decoration:none;z-index:9999;transition:top .2s}
+    .skip-link:focus{top:0}
 
-        body {
-            font-family: 'Plus Jakarta Sans', Arial, sans-serif;
-            background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
-            color: #111827;
-        }
+    .container{max-width:960px;margin:0 auto;padding:48px 24px}
 
-        nav {
-            background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-            color: #ffffff;
-            padding: 0;
-            box-shadow: 0 4px 12px rgba(67, 56, 202, 0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    /* Profile header card */
+    .profile-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius-lg);padding:40px;margin-bottom:24px;
+      box-shadow:var(--shadow-sm);display:flex;gap:32px;align-items:flex-start;
+    }
+    .avatar-circle{
+      width:100px;height:100px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-mid) 100%);
+      color:#fff;display:flex;align-items:center;justify-content:center;
+      font-size:2.25rem;font-weight:800;
+    }
+    .profile-name{font-size:1.75rem;font-weight:800;letter-spacing:-.03em;margin-bottom:4px}
+    .profile-email{color:var(--primary-mid);font-weight:600;font-size:.9375rem;margin-bottom:20px}
+    .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .stat-block{background:var(--primary-light);border:1px solid var(--border-strong);padding:16px;border-radius:var(--radius-md);text-align:center}
+    .stat-val{font-size:1.5rem;font-weight:800;color:var(--primary);line-height:1}
+    .stat-lbl{font-size:.75rem;color:var(--text-secondary);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
 
-        .navbar-container {
-            width: min(1200px, calc(100% - 32px));
-            margin: 0 auto;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 40px;
-        }
+    /* Section cards */
+    .section-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;margin-bottom:24px;box-shadow:var(--shadow-sm)}
+    .section-card h2{font-size:1.125rem;font-weight:800;letter-spacing:-.02em;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
 
-        .navbar-logo a {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            color: #ffffff;
-            font-weight: 800;
-            font-size: 1.3rem;
-        }
+    .form-group{margin-bottom:20px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    label{display:block;font-size:.8125rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;letter-spacing:.01em}
+    input,textarea,select{
+      width:100%;border:1.5px solid var(--border);border-radius:var(--radius-md);
+      padding:11px 14px;font-size:.9375rem;color:var(--text-primary);
+      font-family:var(--font);background:var(--bg);resize:vertical;min-height:48px;
+      transition:border-color var(--transition),box-shadow var(--transition);
+    }
+    textarea{min-height:100px}
+    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(67,56,202,.12);background:var(--surface)}
 
-        .navbar-menu {
-            display: flex;
-            gap: 32px;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            flex: 1;
-        }
+    .btn-save{
+      display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-mid) 100%);
+      color:#fff;border:none;border-radius:var(--radius-md);
+      padding:12px 24px;font-weight:700;font-size:.9375rem;
+      cursor:pointer;font-family:var(--font);min-height:48px;
+      transition:all var(--transition);box-shadow:0 4px 14px rgba(67,56,202,.25);
+    }
+    .btn-save:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(67,56,202,.35)}
+    .btn-save:active{transform:translateY(0)}
+    .btn-save:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
 
-        .nav-link {
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: 600;
-            padding: 8px 12px;
-            border-radius: 8px;
-        }
+    .btn-outline{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--bg);color:var(--text-secondary);
+      border:1.5px solid var(--border);border-radius:var(--radius-md);
+      padding:12px 24px;font-weight:600;font-size:.9375rem;
+      cursor:pointer;font-family:var(--font);min-height:48px;
+      transition:all var(--transition);
+    }
+    .btn-outline:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
 
-        .nav-link:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
+    /* Language switcher highlight */
+    .lang-select{
+      max-width:260px;cursor:pointer;
+      border-color:var(--border-strong);
+    }
 
-        .navbar-user {
-            position: relative;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            color: #ffffff;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            font-weight: 700;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .user-menu {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            min-width: 200px;
-            overflow: hidden;
-            z-index: 1000;
-        }
-
-        .user-menu.hidden {
-            display: none;
-        }
-
-        .user-menu-header {
-            padding: 16px;
-            border-bottom: 1px solid #e2e8f0;
-            color: #111827;
-            font-weight: 700;
-        }
-
-        .user-menu-item {
-            display: block;
-            width: 100%;
-            padding: 12px 16px;
-            border: none;
-            background: none;
-            color: #334155;
-            text-decoration: none;
-            cursor: pointer;
-            text-align: left;
-            transition: background 0.2s;
-        }
-
-        .user-menu-item:hover {
-            background: #f1f5f9;
-        }
-
-        .user-menu-item.logout {
-            color: #dc2626;
-        }
-
-        .user-menu hr {
-            margin: 4px 0;
-            border: none;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .container {
-            width: min(1000px, calc(100% - 32px));
-            margin: 48px auto;
-        }
-
-        .profile-header {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 32px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            display: flex;
-            gap: 32px;
-            align-items: flex-start;
-        }
-
-        .profile-avatar-large {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            font-weight: 800;
-            flex-shrink: 0;
-        }
-
-        .profile-info {
-            flex: 1;
-        }
-
-        .profile-name {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 8px;
-        }
-
-        .profile-email {
-            color: #6366f1;
-            font-size: 1.1rem;
-            margin-bottom: 16px;
-        }
-
-        .profile-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-top: 16px;
-        }
-
-        .stat-item {
-            background: #eef2ff;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #4338ca;
-        }
-
-        .stat-label {
-            color: #475569;
-            font-size: 0.9rem;
-            margin-top: 4px;
-        }
-
-        .profile-section {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 32px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: 800;
-            margin-bottom: 24px;
-            color: #0f172a;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #334155;
-        }
-
-        input, textarea {
-            width: 100%;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 1rem;
-            color: #111827;
-            font-family: inherit;
-            resize: vertical;
-        }
-
-        button {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(67, 56, 202, 0.3);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .profile-header {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
-
-            .profile-stats {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .navbar-menu {
-                gap: 16px;
-            }
-        }
-    </style>
+    @media(max-width:768px){
+      .profile-card{flex-direction:column;align-items:center;text-align:center}
+      .profile-stats{grid-template-columns:1fr}
+      .form-row{grid-template-columns:1fr}
+      .container{padding:32px 16px}
+    }
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
 </head>
 <body>
-    <div id="navbar-placeholder"></div>
-    <script src="/js/navbar.js"></script>
-    <div class="container">
-        <!-- Profile Header -->
-        <div class="profile-header">
-            <div class="profile-avatar-large" id="profileAvatarLarge">U</div>
-            <div class="profile-info">
-                <div class="profile-name" id="profileName">John Doe</div>
-                <div class="profile-email" id="profileEmail">john@example.com</div>
-                <div class="profile-stats">
-                    <div class="stat-item">
-                        <div class="stat-value">3</div>
-                        <div class="stat-label">Resumes</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">12</div>
-                        <div class="stat-label">Saved Jobs</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">5</div>
-                        <div class="stat-label">Applications</div>
-                    </div>
-                </div>
-            </div>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Shared navbar -->
+  <div id="navbar-placeholder"></div>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/navbar.js"></script>
+
+  <main id="main" class="container">
+
+    <!-- Profile overview -->
+    <div class="profile-card">
+      <div class="avatar-circle" id="profileAvatarLarge" aria-hidden="true">U</div>
+      <div style="flex:1">
+        <div class="profile-name" id="profileName">John Doe</div>
+        <div class="profile-email" id="profileEmail">john@example.com</div>
+        <div class="profile-stats">
+          <div class="stat-block">
+            <div class="stat-val">3</div>
+            <div class="stat-lbl" data-i18n="profile.resumes">Resumes</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-val">12</div>
+            <div class="stat-lbl" data-i18n="profile.savedJobs">Saved Jobs</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-val">5</div>
+            <div class="stat-lbl" data-i18n="profile.apps">Applications</div>
+          </div>
         </div>
-
-        <!-- Edit Profile Section -->
-        <div class="profile-section">
-            <h2 class="section-title">Edit Profile</h2>
-            <form id="profileForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="firstName">First Name</label>
-                        <input type="text" id="firstName" placeholder="John">
-                    </div>
-                    <div class="form-group">
-                        <label for="lastName">Last Name</label>
-                        <input type="text" id="lastName" placeholder="Doe">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" placeholder="john@example.com">
-                </div>
-
-                <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" placeholder="+1 (555) 000-0000">
-                </div>
-
-                <div class="form-group">
-                    <label for="bio">Bio</label>
-                    <textarea id="bio" rows="4" placeholder="Tell us about yourself..."></textarea>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="location">Location</label>
-                        <input type="text" id="location" placeholder="Bangkok, Thailand">
-                    </div>
-                    <div class="form-group">
-                        <label for="title">Job Title</label>
-                        <input type="text" id="title" placeholder="Software Engineer">
-                    </div>
-                </div>
-
-                <button type="submit"> Save Changes</button>
-            </form>
-        </div>
-
-        <!-- Account Settings Section -->
-        <div class="profile-section">
-            <h2 class="section-title">Account Settings</h2>
-            <div class="form-group">
-                <label for="language">Preferred Language</label>
-                <select id="language" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 16px;">
-                    <option value="en">English</option>
-                    <option value="th">ไทย</option>
-                </select>
-            </div>
-            <button id="changePasswordBtn" style="margin-top: 16px;"> Change Password</button>
-        </div>
+      </div>
     </div>
 
-    <script>
-        // User menu toggle
-        document.getElementById('userBtn').addEventListener('click', function() {
-            const menu = document.getElementById('userMenu');
-            menu.classList.toggle('hidden');
-        });
+    <!-- Edit profile -->
+    <div class="section-card">
+      <h2 data-i18n="profile.editTitle">Edit Profile</h2>
+      <form id="profileForm" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName" data-i18n="profile.firstName">First Name</label>
+            <input type="text" id="firstName" autocomplete="given-name" placeholder="John">
+          </div>
+          <div class="form-group">
+            <label for="lastName" data-i18n="profile.lastName">Last Name</label>
+            <input type="text" id="lastName" autocomplete="family-name" placeholder="Doe">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email" data-i18n="profile.email">Email Address</label>
+            <input type="email" id="email" autocomplete="email" placeholder="john@example.com">
+          </div>
+          <div class="form-group">
+            <label for="phone" data-i18n="profile.phone">Phone Number</label>
+            <input type="tel" id="phone" autocomplete="tel" placeholder="+1 (555) 000-0000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="bio" data-i18n="profile.bio">Bio</label>
+          <textarea id="bio" rows="4" data-i18n-ph="profile.bioPh" placeholder="Tell us about yourself..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="location" data-i18n="profile.location">Location</label>
+            <input type="text" id="location" autocomplete="address-level2" placeholder="Bangkok, Thailand">
+          </div>
+          <div class="form-group">
+            <label for="jobTitle" data-i18n="profile.jobTitle">Job Title</label>
+            <input type="text" id="jobTitle" placeholder="Software Engineer">
+          </div>
+        </div>
+        <button type="submit" class="btn-save" id="saveBtn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2 10v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 3v8M5 6l3-3 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span data-i18n="profile.save">Save Changes</span>
+        </button>
+      </form>
+    </div>
 
-        // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const userMenu = document.getElementById('userMenu');
-            const userBtn = document.getElementById('userBtn');
-            if (!event.target.closest('.navbar-user')) {
-                userMenu.classList.add('hidden');
-            }
-        });
+    <!-- Account settings -->
+    <div class="section-card">
+      <h2 data-i18n="profile.settings">Account Settings</h2>
+      <div class="form-group">
+        <label for="language" data-i18n="profile.language">Preferred Language</label>
+        <!-- lang-select class lets i18n.js sync this automatically -->
+        <select id="language" class="lang-select">
+          <option value="en">English</option>
+          <option value="th">ไทย</option>
+        </select>
+      </div>
+      <button type="button" class="btn-outline" id="changePasswordBtn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <span data-i18n="profile.password">Change Password</span>
+      </button>
+    </div>
 
-        // Load user info from localStorage
-        function loadUserInfo() {
-            const user = JSON.parse(localStorage.getItem('user') || '{"name":"John Doe","email":"john@example.com","initials":"JD"}');
-            
-            const [firstName, lastName] = user.name.split(' ');
-            document.getElementById('firstName').value = firstName || '';
-            document.getElementById('lastName').value = lastName || '';
-            document.getElementById('email').value = user.email || '';
-            document.getElementById('profileName').textContent = user.name;
-            document.getElementById('profileEmail').textContent = user.email;
-            document.getElementById('userInitial').textContent = user.initials || 'U';
-            document.getElementById('profileAvatarLarge').textContent = user.initials || 'U';
-            document.getElementById('userName').textContent = user.name;
-        }
+  </main>
 
-        // Save profile
-        document.getElementById('profileForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const user = {
-                name: `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                bio: document.getElementById('bio').value,
-                location: document.getElementById('location').value,
-                title: document.getElementById('title').value,
-                initials: `${document.getElementById('firstName').value.charAt(0)}${document.getElementById('lastName').value.charAt(0)}`.toUpperCase()
-            };
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
 
-            localStorage.setItem('user', JSON.stringify(user));
-            alert('Profile updated successfully!');
-            loadUserInfo();
-        });
+      /* ── Load user data ── */
+      function loadUser() {
+        try {
+          const u = JSON.parse(localStorage.getItem('user') || '{"name":"John Doe","email":"john@example.com","initials":"JD"}');
+          const [fn, ln] = (u.name || '').split(' ');
+          document.getElementById('firstName').value  = fn || '';
+          document.getElementById('lastName').value   = ln || '';
+          document.getElementById('email').value      = u.email || '';
+          if (u.phone)    document.getElementById('phone').value    = u.phone;
+          if (u.bio)      document.getElementById('bio').value      = u.bio;
+          if (u.location) document.getElementById('location').value = u.location;
+          if (u.title)    document.getElementById('jobTitle').value  = u.title;
+          document.getElementById('profileName').textContent        = u.name || '';
+          document.getElementById('profileEmail').textContent       = u.email || '';
+          document.getElementById('profileAvatarLarge').textContent = u.initials || 'U';
+        } catch(e) {}
+      }
 
-        loadUserInfo();
-    </script>
+      /* ── Save profile ── */
+      document.getElementById('profileForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const fn = document.getElementById('firstName').value.trim();
+        const ln = document.getElementById('lastName').value.trim();
+        const user = {
+          name:     `${fn} ${ln}`.trim(),
+          email:    document.getElementById('email').value,
+          phone:    document.getElementById('phone').value,
+          bio:      document.getElementById('bio').value,
+          location: document.getElementById('location').value,
+          title:    document.getElementById('jobTitle').value,
+          initials: `${fn.charAt(0)}${ln.charAt(0)}`.toUpperCase(),
+        };
+        localStorage.setItem('user', JSON.stringify(user));
+        loadUser();
+
+        // Visual feedback — swap button text briefly
+        const span = document.querySelector('#saveBtn [data-i18n="profile.save"]');
+        const orig = span.textContent;
+        span.textContent = I18n.t('profile.saved');
+        setTimeout(() => span.textContent = orig, 2000);
+      });
+
+      /* ── Language switcher ── */
+      document.getElementById('language').addEventListener('change', function () {
+        I18n.setLang(this.value);
+
+        // Persist lang preference into user object too
+        try {
+          const u = JSON.parse(localStorage.getItem('user') || '{}');
+          u.lang = this.value;
+          localStorage.setItem('user', JSON.stringify(u));
+        } catch(e) {}
+      });
+
+      loadUser();
+    });
+  </script>
 </body>
 </html>
