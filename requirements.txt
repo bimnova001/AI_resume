@@ -1,9 +1,11 @@
 fastapi
-fitz
+python-dotenv
+pymupdf
 googletrans
 pydantic
 PyGithub
 Requests
+httpx
 scikit_learn
 sentence_transformers
 llama-cpp-python
