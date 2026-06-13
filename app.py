@@ -302,6 +302,7 @@ def runnodejs():
     import subprocess
     try:
         result = subprocess.run(["node", "./web/server.js"], capture_output=True, text=True, check=True)
+        print("Node.js server output:", result.stdout)
         return result.stdout
     except subprocess.CalledProcessError as e:
         logger.error(f"Node.js script error: {e.stderr}")
@@ -309,12 +310,15 @@ def runnodejs():
 
 if __name__ == "__main__":
     try :
+        print("Starting FastAPI server...")
+        print("localhost: http://localhost:3000")
         import uvicorn
         host = os.getenv("HOST", "0.0.0.0")
         port = int(os.getenv("PORT", 8000))
         uvicorn.run(app, host=host, port=port)
         try : 
             runnodejs()
+            
         except Exception as e:
             logger.error(f"Failed to start Node.js server: {e}")
             print(f"Error starting Node.js server: {e}")
