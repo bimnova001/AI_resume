@@ -1,0 +1,6 @@
+2026-06-14 13:18:41 - ERROR - Failed to start server: stdout and stderr arguments may not be used with capture_output.
+2026-06-14 13:27:59 - INFO - Node.js server started (PID: 12868)
+2026-06-14 13:32:05 - INFO - Node.js server started (PID: 12672)
+2026-06-14 13:32:42 - INFO - Starting market analysis
+2026-06-14 13:38:45 - INFO - Node.js server started (PID: 4116)
+2026-06-14 13:39:04 - INFO - Starting market analysis

@@ -7,7 +7,7 @@ const fs = require("fs");
 const app = express();
 // server.js หรือ app.js
 app.use('/locales', express.static('locales'))
-app.use(express.static("public"));
+app.use(express.static("./web/public"));
 app.use(express.json());
 
 const upload = multer({

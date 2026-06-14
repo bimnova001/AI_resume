@@ -10,7 +10,7 @@ from logger import logger
 
 from googletrans import Translator
 from dotenv import load_dotenv
-
+from github import Github
 import json
 import os
 import re
@@ -23,8 +23,8 @@ from datetime import datetime, timedelta
 load_dotenv()
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
+g = Github() 
 app = FastAPI()
 
 app.add_middleware(
@@ -199,52 +199,29 @@ async def get_hackernews():
         logger.error(f"HackerNews Error: {e}")
         return []
 
-def _github_trending_sync(g, limit=10):
-    since = (
-        datetime.now() - timedelta(days=30)
-    ).strftime("%Y-%m-%d")
-    query = (
-        f"created:>{since} "
-        "(AI OR LLM OR machine-learning OR "
-        "deep-learning OR agent OR python)"
-    )
+def get_github_trending():
+    since = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+    query = f"created:>{since}"
+
     repos = g.search_repositories(
         query=query,
         sort="stars",
         order="desc"
     )
-    results = []
-    for repo in repos[:limit]:
-        results.append({
+
+    result = []
+
+    for repo in repos[:20]:
+        result.append({
             "name": repo.full_name,
-            "description": (
-                repo.description
-                if repo.description
-                else ""
-            ),
+            "description": repo.description,
             "stars": repo.stargazers_count,
             "language": repo.language,
-            "topics": repo.get_topics(),
             "url": repo.html_url
         })
-    return results
 
-
-
-async def get_github_trending(g, limit=10):
-    try:
-        result = await asyncio.to_thread(
-            _github_trending_sync,
-            g,
-            limit
-        )
-        return result
-
-    except Exception as e:
-        logger.error(
-            f"GitHub API Error: {e}"
-        )
-        return []
+    return result
 
 async def get_newsapi():
     if not NEWS_API_KEY:
@@ -280,7 +257,7 @@ async def analyze_market():
     logger.info("Starting market analysis")
     # Fetch all data sources in parallel
     hacker_news_task = get_hackernews()
-    github_trending_task = get_github_trending()
+    github_trending_task = asyncio.to_thread(get_github_trending)
     tech_news_task = get_newsapi()
 
     hacker_news, github_trending, tech_news = await asyncio.gather(
@@ -320,27 +297,37 @@ async def analyze_market():
 def runnodejs():
     import subprocess
     try:
-        result = subprocess.run(["node", "./web/server.js"], capture_output=True, text=True, check=True)
-        print("Node.js server output:", result.stdout)
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Node.js script error: {e.stderr}")
+        process = subprocess.Popen(
+            ["node", "./web/server.js"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        logger.info(f"Node.js server started (PID: {process.pid})")
+        return process
+    except Exception as e:
+        logger.error(f"Node.js script error: {e}")
         return None
 
 if __name__ == "__main__":
-    try :
-        print("Starting FastAPI server...")
-        print("localhost: http://localhost:3000")
-        import uvicorn
+    import uvicorn
+
+    node_process = None
+    try:
+        node_process = runnodejs()
+        if node_process is None:
+            logger.warning("Node.js server failed to start, continuing with FastAPI only")
+    except Exception as e:
+        logger.error(f"Failed to start Node.js server: {e}")
+
+    try:
         host = os.getenv("HOST", "0.0.0.0")
         port = int(os.getenv("PORT", 8000))
         uvicorn.run(app, host=host, port=port)
-        try : 
-            runnodejs()
-            
-        except Exception as e:
-            logger.error(f"Failed to start Node.js server: {e}")
-            print(f"Error starting Node.js server: {e}")
     except Exception as e:
-        logger.error(f"Failed to start server: {e}")
+        logger.error(f"Failed to start FastAPI server: {e}")
         print(f"Error: {e}")
+    finally:
+        if node_process and node_process.poll() is None:
+            logger.info("Shutting down Node.js server...")
+            node_process.terminate()
