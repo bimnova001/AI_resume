@@ -199,32 +199,51 @@ async def get_hackernews():
         logger.error(f"HackerNews Error: {e}")
         return []
 
-async def get_github_trending():
+def _github_trending_sync(g, limit=10):
+    since = (
+        datetime.now() - timedelta(days=30)
+    ).strftime("%Y-%m-%d")
+    query = (
+        f"created:>{since} "
+        "(AI OR LLM OR machine-learning OR "
+        "deep-learning OR agent OR python)"
+    )
+    repos = g.search_repositories(
+        query=query,
+        sort="stars",
+        order="desc"
+    )
+    results = []
+    for repo in repos[:limit]:
+        results.append({
+            "name": repo.full_name,
+            "description": (
+                repo.description
+                if repo.description
+                else ""
+            ),
+            "stars": repo.stargazers_count,
+            "language": repo.language,
+            "topics": repo.get_topics(),
+            "url": repo.html_url
+        })
+    return results
+
+
+
+async def get_github_trending(g, limit=10):
     try:
-        since = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
-        url = f"https://api.github.com/search/repositories?q=created:>{since}&sort=stars&order=desc"
-        
-        headers = {}
-        if GITHUB_TOKEN:
-            headers["Authorization"] = f"token {GITHUB_TOKEN}"
-            
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers, timeout=20)
-            data = response.json()
-            repos = data.get("items", [])
-            
-            result = []
-            for repo in repos[:20]:
-                result.append({
-                    "name": repo.get("full_name"),
-                    "description": repo.get("description"),
-                    "stars": repo.get("stargazers_count"),
-                    "language": repo.get("language"),
-                    "url": repo.get("html_url")
-                })
-            return result
+        result = await asyncio.to_thread(
+            _github_trending_sync,
+            g,
+            limit
+        )
+        return result
+
     except Exception as e:
-        logger.error(f"GitHub Trending Error: {e}")
+        logger.error(
+            f"GitHub API Error: {e}"
+        )
         return []
 
 async def get_newsapi():
