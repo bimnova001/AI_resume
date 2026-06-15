@@ -1,4 +1,4 @@
-# Career Copilot AI
+# AI Career Navigator
 
 > AI-powered career planning assistant that helps students bridge the gap between their current skills and industry requirements.
 
