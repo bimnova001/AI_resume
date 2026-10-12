@@ -1,0 +1,18 @@
+# Frontend proxy: Express (proxies /analyze, /jobs, /auth, /admin/* to the API).
+FROM node:20-alpine
+
+ENV NODE_ENV=production
+WORKDIR /srv/web
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY server.js ./
+COPY public/ ./public/
+COPY locales/ ./locales/
+RUN mkdir -p /srv/web/temp
+
+EXPOSE 3000
+
+# BACKEND_URL is injected by docker-compose (default http://api:8000)
+CMD ["node", "server.js"]

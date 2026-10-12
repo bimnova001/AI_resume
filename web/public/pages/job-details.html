@@ -415,8 +415,8 @@
 
         <!-- Job Header -->
         <div class="job-header" data-aos="fade-up">
-            <div class="job-title" id="jobTitle">Senior AI Engineer</div>
-            <div class="job-company" id="jobCompany">Tech Corporation</div>
+            <div class="job-title" id="jobTitle">Loading…</div>
+            <div class="job-company" id="jobCompany"></div>
 
             <div class="job-meta">
                 <div class="meta-item" data-aos="fade-up" data-aos-delay="100">
@@ -425,7 +425,7 @@
                     </div>
                     <div class="meta-text">
                         <h4>Location</h4>
-                        <p id="jobLocation">Bangkok, Thailand</p>
+                        <p id="jobLocation">—</p>
                     </div>
                 </div>
 
@@ -435,7 +435,7 @@
                     </div>
                     <div class="meta-text">
                         <h4>Job Type</h4>
-                        <p id="jobType">Full-time</p>
+                        <p id="jobType">—</p>
                     </div>
                 </div>
 
@@ -445,7 +445,7 @@
                     </div>
                     <div class="meta-text">
                         <h4>Posted</h4>
-                        <p id="jobPosted">2 days ago</p>
+                        <p id="jobPosted">—</p>
                     </div>
                 </div>
 
@@ -454,17 +454,17 @@
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="meta-text">
-                        <h4>Applicants</h4>
-                        <p id="jobApplicants">24</p>
+                        <h4>Source</h4>
+                        <p id="jobApplicants">—</p>
                     </div>
                 </div>
             </div>
 
             <div class="job-actions">
-                <button class="btn btn-primary">
-                    <i class="fas fa-paper-plane"></i> Apply Now
-                </button>
-                <button class="btn btn-secondary">
+                <a class="btn btn-primary" id="applyBtn" href="#" target="_blank" rel="noopener" style="display:none">
+                    <i class="fas fa-paper-plane"></i> Apply on original posting
+                </a>
+                <button class="btn btn-secondary" id="saveBtn">
                     <i class="fas fa-bookmark"></i> Save Job
                 </button>
                 <button class="btn btn-secondary">
@@ -482,109 +482,34 @@
                     <h2 class="section-title">
                         <i class="fas fa-file-alt"></i> Job Description
                     </h2>
-                    <p class="description-text" id="jobDescription">
-                        We are seeking a talented Senior AI Engineer to lead our machine learning team. 
-                        You will be responsible for developing cutting-edge AI solutions, mentoring junior engineers, 
-                        and driving innovation in our product offerings.
-                    </p>
+                    <p class="description-text" id="jobDescription">Loading…</p>
                 </div>
 
-                <!-- Responsibilities -->
+                <!-- Posting info (source + dates come from the real feed) -->
                 <div class="section" data-aos="fade-up" data-aos-delay="100">
                     <h2 class="section-title">
-                        <i class="fas fa-tasks"></i> Responsibilities
+                        <i class="fas fa-link"></i> Posting Info
                     </h2>
                     <div class="list-item">
-                        <i class="fas fa-check-circle"></i>
-                        <div>Lead the development of AI/ML models and algorithms</div>
+                        <i class="fas fa-database"></i>
+                        <div>Source: <span id="jobSource">—</span></div>
                     </div>
                     <div class="list-item">
-                        <i class="fas fa-check-circle"></i>
-                        <div>Mentor and guide junior machine learning engineers</div>
+                        <i class="fas fa-calendar"></i>
+                        <div>Posted: <span id="jobPostedDate">—</span></div>
                     </div>
                     <div class="list-item">
-                        <i class="fas fa-check-circle"></i>
-                        <div>Design and implement scalable ML pipelines</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-check-circle"></i>
-                        <div>Collaborate with product and engineering teams</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-check-circle"></i>
-                        <div>Conduct code reviews and maintain best practices</div>
-                    </div>
-                </div>
-
-                <!-- Requirements -->
-                <div class="section" data-aos="fade-up" data-aos-delay="200">
-                    <h2 class="section-title">
-                        <i class="fas fa-graduation-cap"></i> Requirements
-                    </h2>
-                    <div class="list-item">
-                        <i class="fas fa-star"></i>
-                        <div>5+ years of experience in AI/ML development</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-star"></i>
-                        <div>Strong proficiency in Python, TensorFlow, and PyTorch</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-star"></i>
-                        <div>Experience with deep learning and neural networks</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-star"></i>
-                        <div>Knowledge of cloud platforms (AWS, GCP, Azure)</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-star"></i>
-                        <div>Strong communication and leadership skills</div>
+                        <i class="fas fa-external-link-alt"></i>
+                        <div><a id="jobOriginalLink" href="#" target="_blank" rel="noopener">Open original posting</a></div>
                     </div>
                 </div>
 
                 <!-- Skills -->
                 <div class="section" data-aos="fade-up" data-aos-delay="300">
                     <h2 class="section-title">
-                        <i class="fas fa-code"></i> Required Skills
+                        <i class="fas fa-code"></i> Tags
                     </h2>
-                    <div class="skill-tags">
-                        <span class="skill-tag">Python</span>
-                        <span class="skill-tag">Machine Learning</span>
-                        <span class="skill-tag">TensorFlow</span>
-                        <span class="skill-tag">PyTorch</span>
-                        <span class="skill-tag">Deep Learning</span>
-                        <span class="skill-tag">AWS</span>
-                        <span class="skill-tag">Data Science</span>
-                        <span class="skill-tag">Leadership</span>
-                    </div>
-                </div>
-
-                <!-- Benefits -->
-                <div class="section" data-aos="fade-up" data-aos-delay="400">
-                    <h2 class="section-title">
-                        <i class="fas fa-gift"></i> Benefits
-                    </h2>
-                    <div class="list-item">
-                        <i class="fas fa-check"></i>
-                        <div>Competitive salary and performance bonuses</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-check"></i>
-                        <div>Health insurance and retirement benefits</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-check"></i>
-                        <div>Professional development opportunities</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-check"></i>
-                        <div>Flexible work arrangements</div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-check"></i>
-                        <div>Cutting-edge technology and tools</div>
-                    </div>
+                    <div class="skill-tags" id="jobTags"></div>
                 </div>
             </div>
 
@@ -593,8 +518,8 @@
                 <!-- Salary -->
                 <div class="sidebar-section" data-aos="fade-left">
                     <div class="salary-badge">
-                        <div class="salary-label">Annual Salary</div>
-                        <div class="salary-value" id="jobSalary">$120,000</div>
+                        <div class="salary-label">Salary</div>
+                        <div class="salary-value" id="jobSalary">—</div>
                     </div>
                 </div>
 
@@ -604,47 +529,11 @@
                         <i class="fas fa-building"></i> Company
                     </h3>
                     <div class="company-info">
-                        <div class="company-name">Tech Corporation</div>
-                        <div class="company-rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <span>(4.8/5)</span>
-                        </div>
+                        <div class="company-name" id="jobCompanySide">—</div>
                     </div>
-                    <p style="margin-top: 12px; color: #666; font-size: 0.9rem;">
-                        Leading technology company focused on AI innovation and digital transformation.
+                    <p style="margin-top: 12px; color: #666; font-size: 0.9rem;" id="jobSourceNote">
+                        Company details come from the original posting.
                     </p>
-                </div>
-
-                <!-- Quick Facts -->
-                <div class="sidebar-section" data-aos="fade-left" data-aos-delay="200">
-                    <h3 class="sidebar-title">
-                        <i class="fas fa-lightbulb"></i> Quick Facts
-                    </h3>
-                    <div class="list-item">
-                        <i class="fas fa-users"></i>
-                        <div>
-                            <strong>Company Size:</strong><br>
-                            <span style="color: #666; font-size: 0.9rem;">500+ employees</span>
-                        </div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-globe"></i>
-                        <div>
-                            <strong>Industry:</strong><br>
-                            <span style="color: #666; font-size: 0.9rem;">Technology</span>
-                        </div>
-                    </div>
-                    <div class="list-item">
-                        <i class="fas fa-chart-line"></i>
-                        <div>
-                            <strong>Growth:</strong><br>
-                            <span style="color: #666; font-size: 0.9rem;">Rapidly Growing</span>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Share -->
@@ -672,6 +561,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script src="/js/api.js"></script>
     <script>
         // Initialize AOS
         AOS.init({
@@ -679,57 +569,83 @@
             once: true,
             offset: 100
         });
-        // User menu
-        document.getElementById('userBtn').addEventListener('click', function() {
-            const menu = document.getElementById('userMenu');
-            menu.classList.toggle('hidden');
-        });
+        // NOTE: navbar.js (shared component, loaded async) owns userBtn/userMenu
+        // binding and user info. Nothing navbar-related is touched here so this
+        // script can never die before loadJobDetails() runs.
 
-        document.addEventListener('click', function(event) {
-            const userMenu = document.getElementById('userMenu');
-            const userBtn = document.getElementById('userBtn');
-            if (!event.target.closest('.navbar-user')) {
-                userMenu.classList.add('hidden');
-            }
-        });
-
-        // Load user info
-        function loadUserInfo() {
-            const user = JSON.parse(localStorage.getItem('user') || '{"name":"Guest","initials":"G"}');
-            document.getElementById('userName').textContent = user.name;
-            document.getElementById('userInitial').textContent = user.initials || user.name.charAt(0).toUpperCase();
-        }
-
-        // Load job details from URL parameters
-        function loadJobDetails() {
+        // Load job details from the real backend DB (no mock data).
+        async function loadJobDetails() {
             const params = new URLSearchParams(window.location.search);
             const jobId = params.get('id');
+            if (!jobId) {
+                document.getElementById('jobTitle').textContent = "Job not specified";
+                document.getElementById('jobDescription').textContent =
+                    "Open this page from the Jobs list so a real posting id is provided.";
+                return;
+            }
+            let job = null;
+            try {
+                const r = await fetch(Api.url(`/jobs/${encodeURIComponent(jobId)}`));
+                if (r.ok) job = await r.json();
+            } catch (e) { console.error(e); }
+            if (!job || !job.title) {
+                document.getElementById('jobTitle').textContent = "Job not found";
+                document.getElementById('jobDescription').textContent =
+                    "This posting is not in the database. Browse Jobs and refresh the real postings.";
+                return;
+            }
 
-            // Mock job data
-            const jobs = {
-                1: {
-                    title: "Senior AI Engineer",
-                    company: "Tech Corporation",
-                    location: "Bangkok, Thailand",
-                    type: "Full-time",
-                    salary: "$120,000",
-                    posted: "2 days ago",
-                    applicants: "24"
-                },
-                // Add more jobs as needed
-            };
+            const set = (id, v) => { document.getElementById(id).textContent = v || "—"; };
+            set('jobTitle', job.title);
+            set('jobCompany', job.company);
+            set('jobCompanySide', job.company);
+            set('jobLocation', job.location);
+            set('jobType', job.type);
+            set('jobSalary', job.salary);
+            const posted = job.posted_at ? String(job.posted_at).slice(0, 10) : "";
+            set('jobPosted', posted);
+            set('jobApplicants', job.source || "");
+            set('jobSource', job.source || "");
+            set('jobPostedDate', posted);
+            document.getElementById('jobSourceNote').textContent =
+                `Fetched from ${job.source || "partner feed"} · saved ${String(job.fetched_at || "").slice(0, 10)}`;
+            document.getElementById('jobDescription').textContent =
+                job.description || "No description provided by the source.";
+            document.getElementById('jobTags').innerHTML =
+                (job.tags || []).map(t => `<span class="skill-tag">${escapeHtml(t)}</span>`).join("");
 
-            const job = jobs[jobId] || jobs[1];
-            document.getElementById('jobTitle').textContent = job.title;
-            document.getElementById('jobCompany').textContent = job.company;
-            document.getElementById('jobLocation').textContent = job.location;
-            document.getElementById('jobType').textContent = job.type;
-            document.getElementById('jobSalary').textContent = job.salary;
-            document.getElementById('jobPosted').textContent = job.posted;
-            document.getElementById('jobApplicants').textContent = job.applicants;
+            const link = document.getElementById('jobOriginalLink');
+            const applyBtn = document.getElementById('applyBtn');
+            if (job.url) {
+                link.href = job.url;
+                link.textContent = "Open original posting ↗";
+                applyBtn.href = job.url;
+                applyBtn.style.display = "";
+            } else {
+                link.textContent = "No external link provided";
+            }
+
+            document.getElementById('saveBtn').addEventListener('click', async () => {
+                try {
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    if (!user.token) { alert("Log in to save jobs to your account."); return; }
+                    const r = await fetch(Api.url(`/jobs/${encodeURIComponent(job.id)}/save`), {
+                        method: "POST",
+                        headers: { "Authorization": `Bearer ${user.token}` },
+                    });
+                    alert(r.ok ? "Job saved!" : "Could not save job.");
+                } catch (e) { alert("Could not save job."); }
+            });
         }
 
-        loadUserInfo();
+        function escapeHtml(value) {
+            return String(value == null ? "" : value)
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        document.addEventListener('DOMContentLoaded', loadJobDetails);
         loadJobDetails();
     </script>
 </body>

@@ -18,6 +18,7 @@
             <li><a href="/pages/job-listings.html">Jobs</a></li>
             <li><a href="/pages/resume.html">Resume Analyze</a></li>
             <li><a href="/pages/insights.html">Insights Analysis</a></li>
+            <li><a href="/pages/admin.html">Service</a></li>
         </ul>
 
         <div class="nav-user">
@@ -300,51 +301,6 @@ nav {
 }
 </style>
 
-<script>
-// User menu toggle
-const userBtn = document.getElementById('userBtn');
-const userMenu = document.getElementById('userMenu');
-
-userBtn?.addEventListener('click', function(e) {
-    e.stopPropagation();
-    const open = !userMenu.classList.contains('hidden');
-    userMenu.classList.toggle('hidden', open);
-    userBtn.setAttribute('aria-expanded', String(!open));
-});
-
-// Close on outside click
-document.addEventListener('click', function() {
-    userMenu?.classList.add('hidden');
-    userBtn?.setAttribute('aria-expanded', 'false');
-});
-
-// Close on Escape
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        userMenu?.classList.add('hidden');
-        userBtn?.setAttribute('aria-expanded', 'false');
-        userBtn?.focus();
-    }
-});
-
-// Load user info
-function loadUserInfo() {
-    try {
-        const user = JSON.parse(localStorage.getItem('user') || '{"name":"Guest"}');
-        document.getElementById('userName').textContent = user.name || 'Guest';
-        document.getElementById('userInitial').textContent =
-            (user.initials || user.name || 'G').charAt(0).toUpperCase();
-        if (user.color) {
-            userBtn.style.background = user.color;
-        }
-    } catch(e) {}
-}
-
-// Logout
-document.getElementById('logoutBtn')?.addEventListener('click', function() {
-    localStorage.removeItem('user');
-    window.location.href = '/pages/login.html';
-});
-
-loadUserInfo();
-</script>
+<!-- NOTE: navbar.js owns all event binding (userBtn/userMenu/logout/loadUserInfo).
+     Do NOT add a <script> block here — it causes double-binding and the
+     "dropdown closes immediately" bug. -->

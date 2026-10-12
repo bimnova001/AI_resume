@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Dashboard – Resume AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:#4338ca; --primary-mid:#6366f1; --primary-light:#eef2ff;
+      --text:#0f172a; --muted:#475569; --faint:#94a3b8;
+      --surface:#fff; --bg:#f8faff; --border:#e2e8f0; --border-strong:#c7d2fe;
+      --ok:#15803d; --ok-bg:#dcfce7; --bad:#b91c1c; --bad-bg:#fee2e2;
+      --radius:16px; --font:'Plus Jakarta Sans',system-ui,sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;padding:0 0 64px}
+    .wrap{max-width:1100px;margin:0 auto;padding:32px 20px}
+    h1{font-size:1.8rem;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:4px 0 24px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+    .card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px}
+    .card h3{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .card .big{font-size:1.6rem;font-weight:800}
+    .card .small{font-size:.85rem;color:var(--muted)}
+    .pill{display:inline-block;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:100px}
+    .pill.ok{background:var(--ok-bg);color:var(--ok)}
+    .pill.bad{background:var(--bad-bg);color:var(--bad)}
+    .pill.work{background:var(--primary-light);color:var(--primary)}
+    .panel{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+    .panel h2{font-size:1.05rem;margin-bottom:12px}
+    table{width:100%;border-collapse:collapse;font-size:.88rem}
+    th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+    th{color:var(--muted);font-weight:700}
+    a{color:var(--primary)}
+    .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--primary),var(--primary-mid));color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-family:var(--font);cursor:pointer;font-size:.9rem;min-height:44px}
+    .btn:disabled{opacity:.6;cursor:wait}
+    .btn.ghost{background:#fff;color:var(--primary);border:1.5px solid var(--border-strong)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+    .err{background:var(--bad-bg);color:var(--bad);border-radius:10px;padding:12px 14px;font-size:.88rem;margin-bottom:14px;white-space:pre-wrap}
+    .mono{font-family:ui-monospace,Consolas,monospace;font-size:.82rem}
+    @media(max-width:640px){table{font-size:.8rem}}
+  </style>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <script src="/js/navbar.js"></script>
+  <script src="/js/api.js"></script>
+  <main class="wrap">
+    <h1>Service Dashboard</h1>
+    <p class="sub">Backend: <span class="mono" id="apiBase">…</span> · <span id="reach" class="pill work">checking…</span></p>
+    <div id="fatal"></div>
+
+    <div class="row">
+      <button class="btn" id="refreshBtn" type="button">↻ ดึงงานจริงตอนนี้</button>
+      <button class="btn ghost" id="checkBtn" type="button">เช็ค sources สด</button>
+      <button class="btn ghost" id="reloadBtn" type="button">โหลดสถานะใหม่</button>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <div class="panel">
+      <h2>Jobs per source (ใน DB)</h2>
+      <div id="sources"><p class="sub">…</p></div>
+    </div>
+
+    <div class="panel">
+      <h2>Live source check (ยิงจริง ไม่บันทึก)</h2>
+      <div id="live"><p class="sub">กด “เช็ค sources สด” เพื่อทดสอบทีละเจ้า</p></div>
+    </div>
+
+    <div class="panel">
+      <h2>Latest postings (10 ล่าสุด + link + วันที่)</h2>
+      <div id="latest"><p class="sub">…</p></div>
+    </div>
+
+    <div class="panel">
+      <h2>Recent service logs</h2>
+      <div id="logs"><p class="sub">…</p></div>
+    </div>
+  </main>
+
+  <script>
+    function esc(v) {
+      return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    }
+    function pill(ok, text) {
+      return `<span class="pill ${ok === true ? "ok" : ok === false ? "bad" : "work"}">${esc(text)}</span>`;
+    }
+    function fatal(msg) {
+      document.getElementById('fatal').innerHTML = msg ? `<div class="err">${esc(msg)}</div>` : "";
+    }
+    let pollTimer = null;
+
+    async function boot() {
+      document.getElementById('apiBase').textContent =
+        Api.BASE ? Api.BASE + " (direct)" : location.origin + " (via Node proxy)";
+      await loadAll();
+    }
+
+    async function loadAll() {
+      fatal("");
+      let stats = null;
+      try {
+        stats = await Api.get("/admin/stats");
+        document.getElementById('reach').className = "pill ok";
+        document.getElementById('reach').textContent = "backend OK";
+      } catch (e) {
+        document.getElementById('reach').className = "pill bad";
+        document.getElementById('reach').textContent = "backend unreachable";
+        let hint = "• เปิดผ่าน http://localhost:3000 (Node) หรือเช็คว่า uvicorn รันที่พอร์ต 8000\n• ลอง ?api=127.0.0.1:8000 ต่อท้าย URL ถ้าเปลี่ยนพอร์ต";
+        if (e.code === "ECONNREFUSED") {
+          hint = "• Node ติดต่อ backend ไม่ได้ (connection refused): backend อาจยัง start ไม่เสร็จ (รอ ~30 วิแล้วกดโหลดใหม่) หรือพอร์ต 8000 ถูก process อื่นยึด\n• ดู console ของ uvicorn ว่ามี traceback หรือไม่";
+        } else if (e.code) {
+          hint = "• network code: " + e.code + " — เช็ค firewall / proxy";
+        }
+        fatal("ติดต่อ backend ไม่ได้: " + e.message + "\n" + hint);
+        return;
+      }
+      renderCards(stats);
+      renderSources(stats);
+      if (stats.errors && stats.errors.db) {
+        fatal("DB error: " + stats.errors.db + "\n(ลบไฟล์ " + (stats.config || {}).db_path + " แล้ว restart backend เพื่อสร้างใหม่)");
+      }
+      loadLatest();
+      loadLogs();
+      const svc = stats.jobs_service || {};
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = !!svc.refreshing;
+      btn.textContent = svc.refreshing ? "Fetching…" : "↻ ดึงงานจริงตอนนี้";
+      if (svc.refreshing && !pollTimer) {
+        pollTimer = setInterval(async () => {
+          try {
+            const s = await Api.get("/jobs/status");
+            if (!s.refreshing) { clearInterval(pollTimer); pollTimer = null; loadAll(); }
+          } catch (e) { /* keep polling */ }
+        }, 8000);
+      }
+    }
+
+    function renderCards(stats) {
+      const svc = stats.jobs_service || {};
+      const t = (stats.db || {}).tables || {};
+      const when = svc.last_refresh_at ? String(svc.last_refresh_at).slice(0, 16).replace("T", " ") : "never";
+      document.getElementById('cards').innerHTML = `
+        <div class="card"><h3>Jobs in DB</h3><div class="big">${esc(svc.total ?? t.jobs ?? 0)}</div>
+          <div class="small">DB file: ${esc((((stats.db || {}).size_bytes ?? -1) / 1024).toFixed(0))} KB</div></div>
+        <div class="card"><h3>Last server fetch</h3><div class="big" style="font-size:1.05rem">${esc(when)}</div>
+          <div class="small">every ${esc((stats.config || {}).interval_hours)}h · auto: ${esc(String((stats.config || {}).auto_refresh))}</div></div>
+        <div class="card"><h3>Fetching now</h3><div>${pill(svc.refreshing ? null : false, svc.refreshing ? "WORKING…" : "idle")}</div>
+          <div class="small">users: ${esc(t.users ?? 0)} · analyses: ${esc(t.analysis_history ?? 0)}</div></div>
+        <div class="card"><h3>Sources in DB</h3><div class="big">${esc(Object.keys((stats.db || {}).per_source || {}).length)}</div>
+          <div class="small">logs: ${esc(t.app_logs ?? 0)}</div></div>`;
+    }
+
+    function renderSources(stats) {
+      const per = (stats.db || {}).per_source || {};
+      const keys = Object.keys(per);
+      document.getElementById('sources').innerHTML = keys.length
+        ? `<table><tr><th>Source</th><th>Jobs</th></tr>${keys.map(k =>
+            `<tr><td>${esc(k)}</td><td>${esc(per[k])}</td></tr>`).join("")}</table>`
+        : `<p class="sub">ยังไม่มีข้อมูล — กด “ดึงงานจริงตอนนี้” (server จะดึงเอง ถ้าเปิด auto ไว้ไม่ต้องกด)</p>`;
+    }
+
+    async function loadLatest() {
+      try {
+        const data = await Api.get("/jobs?limit=10");
+        const jobs = data.jobs || [];
+        document.getElementById('latest').innerHTML = jobs.length
+          ? `<table><tr><th>Title</th><th>Company</th><th>Source</th><th>Posted</th><th>Link</th></tr>${jobs.map(j =>
+              `<tr><td>${esc(j.title)}</td><td>${esc(j.company || "")}</td><td>${esc(j.source || "")}</td>` +
+              `<td class="mono">${esc(String(j.posted_at || "").slice(0, 10))}</td>` +
+              `<td>${j.url ? `<a href="${esc(j.url)}" target="_blank" rel="noopener">open ↗</a>` : "—"}</td></tr>`).join("")}</table>`
+          : `<p class="sub">DB ว่าง — กดดึงงานจริงได้เลย</p>`;
+      } catch (e) {
+        document.getElementById('latest').innerHTML = `<div class="err">${esc(e.message)}</div>`;
+      }
+    }
+
+    async function loadLogs() {
+      try {
+        const data = await Api.get("/admin/logs?limit=20");
+        const logs = data.logs || [];
+        document.getElementById('logs').innerHTML = logs.length
+          ? `<table><tr><th>#</th><th>Event</th><th>Detail</th><th>Time</th></tr>${logs.map(l =>
+              `<tr><td>${esc(l.id)}</td><td>${esc(l.event)}</td>` +
+              `<td class="mono">${esc(String(l.detail || "").slice(0, 160))}</td>` +
+              `<td class="mono">${esc(String(l.created_at || "").slice(0, 19))}</td></tr>`).join("")}</table>`
+          : `<p class="sub">ยังไม่มี log</p>`;
+      } catch (e) {
+        document.getElementById('logs').innerHTML = `<div class="err">${esc(e.message)}</div>`;
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = true; btn.textContent = "Fetching…";
+      try {
+        const data = await Api.post("/jobs/refresh", { limit_per_source: 50 });
+        if (data.status === "already_running") { loadAll(); return; }
+        loadAll();
+      } catch (e) { fatal("Refresh ล้มเหลว: " + e.message); loadAll(); }
+    });
+    document.getElementById('reloadBtn').addEventListener('click', loadAll);
+    document.getElementById('checkBtn').addEventListener('click', async () => {
+      const box = document.getElementById('live');
+      box.innerHTML = `<p class="sub">กำลังยิงเช็คทีละ source… (~20 วิ)</p>`;
+      try {
+        const data = await Api.get("/admin/source-check");
+        const src = data.sources || {};
+        box.innerHTML = `<table><tr><th>Source</th><th>Status</th><th>Sample</th><th>Example / note</th></tr>` +
+          Object.keys(src).map(k => { const s = src[k]; return `<tr><td>${esc(k)}</td>` +
+            `<td>${s.configured === false ? pill(null, "not configured") : pill(!!s.ok, s.ok ? s.ms + " ms" : "FAIL")}</td>` +
+            `<td>${esc(s.sample ?? 0)}</td><td>${esc(s.example || s.note || s.error || "")}</td></tr>`; }).join("") + `</table>`;
+      } catch (e) { box.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+    });
+
+    boot();
+  </script>
+</body>
+</html>

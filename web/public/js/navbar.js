@@ -33,10 +33,27 @@
 
       placeholder.remove();
       init();
-      // Apply current language to navbar elements
-      if (typeof I18n !== "undefined") I18n.applyLang(I18n.getLang());
+      // Apply current language to navbar elements.
+      // i18n.js loads async from CDN — wait for readiness instead of
+      // calling applyLang immediately (race condition fix).
+      applyNavbarLang();
     })
     .catch(err => console.error('[navbar.js]', err));
+
+  function applyNavbarLang() {
+    const apply = () => {
+      try {
+        if (typeof I18n !== "undefined" && I18n.applyLang) I18n.applyLang(I18n.getLang());
+      } catch (e) { /* fallback language, ignore */ }
+    };
+    if (typeof I18n !== "undefined" && typeof i18next !== "undefined" && i18next.isInitialized) {
+      apply();
+    } else {
+      document.addEventListener('i18n:ready', apply, { once: true });
+      // If CDN failed, don't hang: apply defaults on failure too.
+      document.addEventListener('i18n:failed', apply, { once: true });
+    }
+  }
 
   function init() {
     markActivePage();

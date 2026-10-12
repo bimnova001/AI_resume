@@ -579,10 +579,19 @@
         }
       });
 
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
       function renderList(id, items = []) {
         const ul = document.getElementById(id);
         if (!ul) return;
-        ul.innerHTML = items.map(item => `<li>${item}</li>`).join('');
+        ul.innerHTML = items.map(item => `<li>${escapeHtml(item)}</li>`).join('');
       }
 
     }); // end DOMContentLoaded

@@ -53,7 +53,18 @@ function translateUI(lang) {
 langSelect.addEventListener("change", () => translateUI(langSelect.value));
 translateUI(langSelect.value);
 
-function tryParseJson(text) {
+// Shared helpers live in /js/json-util.js (single source of truth).
+// Fall back to local copies if the script failed to load.
+const escapeHtml = window.escapeHtml || function (value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+};
+
+const tryParseJson = window.tryParseJson || function (text) {
     if (!text || typeof text !== "string") return null;
     try {
         return JSON.parse(text.trim());
@@ -97,7 +108,7 @@ function tryParseJson(text) {
         }
         return null;
     }
-}
+};
 
 const thaiTranslations = {
     "resume_score": "คะแนนเรซูเม่",
@@ -147,24 +158,35 @@ async function translateText(text, lang) {
 async function translateAnalysisObject(analysis, lang) {
     if (lang !== "th" || typeof analysis !== "object" || !analysis) return analysis;
 
-    const translated = {};
+    // Batch: fire ALL string translations concurrently (one Promise.all),
+    // instead of awaiting key-by-key which serializes latency (N x RTT).
+    const tasks = [];
+    const translated = Array.isArray(analysis) ? [...analysis] : { ...analysis };
     for (const [key, value] of Object.entries(analysis)) {
         if (typeof value === "string") {
-            translated[key] = await translateText(value, lang);
-        } else if (Array.isArray(value)) {
-            translated[key] = await Promise.all(
-                value.map(item => 
-                    typeof item === "string" ? translateText(item, lang) : Promise.resolve(item)
-                )
+            tasks.push(
+                translateText(value, lang).then(t => { translated[key] = t; })
             );
+        } else if (Array.isArray(value)) {
+            translated[key] = new Array(value.length);
+            value.forEach((item, idx) => {
+                if (typeof item === "string") {
+                    tasks.push(
+                        translateText(item, lang).then(t => { translated[key][idx] = t; })
+                    );
+                } else {
+                    translated[key][idx] = item;
+                }
+            });
         } else {
             translated[key] = value;
         }
     }
+    await Promise.all(tasks);
     return translated;
 }
 
-function normalizeArray(items) {
+const normalizeArray = window.normalizeArray || function (items) {
     if (Array.isArray(items)) return items.filter(item => item !== null && item !== undefined && String(item).trim() !== "");
     if (typeof items === "string") {
         const trimmed = items.trim();
@@ -186,15 +208,15 @@ function normalizeArray(items) {
         return [trimmed];
     }
     return [];
-}
+};
 
 function renderList(title, items) {
     const normalized = normalizeArray(items);
     if (normalized.length === 0) return "";
     return `
         <div class="result-section">
-            <h3>${title}</h3>
-            <ul>${normalized.map(item => `<li>${item}</li>`).join("")}</ul>
+            <h3>${escapeHtml(title)}</h3>
+            <ul>${normalized.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
         </div>
     `;
 }
@@ -204,7 +226,7 @@ function renderChips(items) {
     if (normalized.length === 0) return "<p class=\"muted\">—</p>";
     return `
         <div class="chip-list">
-            ${normalized.map(i => `<span class="chip">${i}</span>`).join("")}
+            ${normalized.map(i => `<span class="chip">${escapeHtml(i)}</span>`).join("")}
         </div>
     `;
 }
@@ -254,7 +276,7 @@ async function renderAnalysis(data, lang) {
                     <div class="progress-outer">
                         <div class="progress-inner" style="width: ${matchPctNumber}%"></div>
                     </div>
-                    <div style="margin-top:10px;color:#475569">${jobFitLabel}: ${analysis?.match_comment ?? (lang === 'th' ? 'ไม่มีความคิดเห็น' : 'No comment')}</div>
+                    <div style="margin-top:10px;color:#475569">${escapeHtml(jobFitLabel)}: ${escapeHtml(analysis?.match_comment ?? (lang === 'th' ? 'ไม่มีความคิดเห็น' : 'No comment'))}</div>
                 </div>
             </div>
             <div class="result-grid" style="margin-top:16px">
@@ -264,7 +286,7 @@ async function renderAnalysis(data, lang) {
                 </div>
                 <div class="stat">
                     <h3>${lang === "th" ? "ตำแหน่งที่สมัคร" : "Applied Role"}</h3>
-                    <p>${data.job_title ?? '-'}</p>
+                    <p>${escapeHtml(data.job_title ?? '-')}</p>
                 </div>
                 <div class="stat">
                     <h3>${lang === "th" ? "เป็นบัณฑิตจบใหม่" : "New Graduate"}</h3>
@@ -277,8 +299,8 @@ async function renderAnalysis(data, lang) {
     // Summary
     out += `
         <div class="result-section">
-            <h3>${summaryLabel}</h3>
-            <p>${analysis?.summary ?? t.noSummary}</p>
+            <h3>${escapeHtml(summaryLabel)}</h3>
+            <p>${escapeHtml(analysis?.summary ?? t.noSummary)}</p>
         </div>
     `;
 
@@ -297,9 +319,38 @@ async function renderAnalysis(data, lang) {
     out += `</div>`;
 
     // Actions
-    out += `<div class="result-section" style="margin-top:8px"><h3>${actionsLabel}</h3>${renderList('', analysis?.recommended_actions ?? [])}</div>`;
+    out += `<div class="result-section" style="margin-top:8px"><h3>${escapeHtml(actionsLabel)}</h3>${renderList('', analysis?.recommended_actions ?? [])}</div>`;
+
+    // AI-picked jobs from the real postings DB (top-3 for this resume)
+    out += renderSuggestedJobs(data.suggested_jobs ?? [], lang);
 
     return out;
+}
+
+function renderSuggestedJobs(jobs, lang) {
+    const title = lang === "th" ? "งานที่ AI แนะนำสำหรับคุณ" : "Jobs picked for you";
+    const sub = lang === "th"
+        ? "เลือกจากประกาศงานจริงโดยเทียบเนื้อหาเรซูเม่ของคุณ"
+        : "Picked from real postings by matching your resume content";
+    if (!Array.isArray(jobs) || jobs.length === 0) {
+        return `<div class="result-section" style="margin-top:8px"><h3>${escapeHtml(title)}</h3>` +
+            `<p class="muted">${escapeHtml(lang === "th" ? "ยังไม่มีงานที่ตรง — ลองดึงประกาศงานจริงก่อน" : "No matches yet — refresh the real postings first")}</p></div>`;
+    }
+    const cards = jobs.map(j => {
+        const pct = (j.match !== null && j.match !== undefined && j.match !== "") ? Number(j.match).toFixed(1) + "%" : "—";
+        const skills = Array.isArray(j.matched_skills) && j.matched_skills.length
+            ? `<div class="chip-list" style="margin-top:8px">${j.matched_skills.map(s => `<span class="chip">${escapeHtml(s)}</span>`).join("")}</div>` : "";
+        const links = `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">` +
+            `<a href="/pages/job-details.html?id=${encodeURIComponent(j.id)}" class="card-link">View role</a>` +
+            (j.url ? `<a href="${escapeHtml(j.url)}" target="_blank" rel="noopener" class="card-link">Apply ↗</a>` : "") + `</div>`;
+        return `<div class="result-section list-card">` +
+            `<h3>${escapeHtml(j.title || "—")} <span class="chip">${escapeHtml(pct)}</span></h3>` +
+            `<p class="muted">${escapeHtml([j.company, j.location].filter(Boolean).join(" · "))}</p>` +
+            `<p style="margin-top:8px">${escapeHtml(j.reason || "")}</p>${skills}${links}</div>`;
+    }).join("");
+    return `<div class="result-section" style="margin-top:8px"><h3>${escapeHtml(title)}</h3>` +
+        `<p class="muted">${escapeHtml(sub)}</p></div>` +
+        `<div class="sections-grid" style="margin-top:8px">${cards}</div>`;
 }
 
 btn.addEventListener("click", analyzeResume);
@@ -333,7 +384,12 @@ async function analyzeResume() {
     resultDiv.innerHTML = `<div class="result-card"><p>${translations[lang].analyzing}</p></div>`;
 
     try {
-        const response = await fetch("/analyze", { method: "POST", body: formData });
+        const headers = {};
+        try {
+            const user = JSON.parse(localStorage.getItem("user") || "{}");
+            if (user.token) headers["Authorization"] = `Bearer ${user.token}`;
+        } catch (e) { /* anonymous analysis */ }
+        const response = await fetch("/analyze", { method: "POST", body: formData, headers });
         const data = await response.json();
 
         console.group("Resume Analysis Debug");

@@ -22,6 +22,12 @@
   scripts.forEach(src => {
     const s = document.createElement('script');
     s.src = src;
+    s.crossOrigin = 'anonymous';
+    s.onerror = () => {
+      console.warn('[i18n] CDN load failed:', src);
+      // Fallback: page stays in default language instead of breaking.
+      document.dispatchEvent(new CustomEvent('i18n:failed'));
+    };
     s.onload = () => {
       loaded++;
       if (loaded === scripts.length) initI18next();
@@ -31,6 +37,11 @@
 })();
 
 function initI18next() {
+  if (typeof i18next === 'undefined' || typeof i18nextHttpBackend === 'undefined') {
+    console.warn('[i18n] CDN scripts missing, skipping init (fallback language).');
+    document.dispatchEvent(new CustomEvent('i18n:failed'));
+    return;
+  }
   i18next
     .use(i18nextHttpBackend)
     .use(i18nextBrowserLanguageDetector)

@@ -6,3 +6,13 @@ ui/
 Scene 1 (0-4 วิ).txt
 ปัญหา.txt
 .env
+.env.local
+ปัญหา.docx
+ปัญหา.pdf
+~$ปัญหา.docx
+uploads/
+temp/
+web/temp/
+logs/
+*.log
+data/

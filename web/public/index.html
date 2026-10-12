@@ -520,45 +520,66 @@
       { cls:'av-e', abbr:'DS' }, { cls:'av-f', abbr:'AL' },
     ];
 
-    const jobs = [
-      { id:1, title:"Senior AI Engineer", company:"Tech Corp", location:"Bangkok, Thailand", type:"Full-time", salary:"$80k – 120k", description:"Lead our ML team building cutting-edge deep learning systems. Requires 5+ years experience with large-scale AI infrastructure.", tags:["AI","Python","TensorFlow"], posted:"2 days ago" },
-      { id:2, title:"Full Stack Developer", company:"StartUp Inc", location:"Remote", type:"Full-time", salary:"$60k – 90k", description:"Build scalable web applications using React and Node.js. Join our talented team to ship products used by millions.", tags:["React","Node.js","TypeScript"], posted:"3 days ago" },
-      { id:3, title:"Data Scientist", company:"Analytics Pro", location:"Singapore", type:"Full-time", salary:"$70k – 100k", description:"Analyze large datasets and build predictive models that drive business decisions. Python, R, and SQL expertise required.", tags:["Python","SQL","R"], posted:"1 day ago" },
-      { id:4, title:"DevOps Engineer", company:"Cloud Systems", location:"Hong Kong", type:"Full-time", salary:"$75k – 110k", description:"Manage and optimize cloud infrastructure at scale. Deep hands-on experience with AWS, Docker, and Kubernetes essential.", tags:["AWS","Docker","Kubernetes"], posted:"4 days ago" },
-      { id:5, title:"UX/UI Designer", company:"Design Studios", location:"Remote", type:"Full-time", salary:"$50k – 75k", description:"Create beautiful, intuitive interfaces grounded in user research. Strong portfolio of design systems work required.", tags:["Figma","UI/UX","Design Systems"], posted:"5 days ago" },
-      { id:6, title:"ML Research Scientist", company:"AI Labs", location:"Tokyo, Japan", type:"Full-time", salary:"$90k – 140k", description:"Conduct cutting-edge machine learning research and publish findings. PhD or equivalent experience in ML required.", tags:["Research","ML","PyTorch"], posted:"1 day ago" },
-    ];
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Real postings only — no mock data. Served from GET /jobs (backend DB).
+    let jobs = [];
+
+    async function loadJobs() {
+      try {
+        const r = await fetch("/jobs?limit=6");
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        jobs = (data.jobs || []).filter(j => j.title);
+      } catch (e) {
+        console.error("Featured jobs failed:", e);
+        jobs = [];
+      }
+      renderJobs();
+    }
 
     function renderJobs() {
-      document.getElementById('jobsGrid').innerHTML = jobs.map((job, i) => {
+      const grid = document.getElementById('jobsGrid');
+      if (!jobs.length) {
+        grid.innerHTML = `<p style="color:#64748b">No postings yet — open <a href="/pages/job-listings.html">Jobs</a> and press “Refresh real postings”.</p>`;
+        return;
+      }
+      grid.innerHTML = jobs.map((job, i) => {
         const av = AVATARS[i] || AVATARS[0];
+        const abbr = esc(((job.company || "?").trim().charAt(0) || "?").toUpperCase());
+        const meta = [job.source, job.posted_at ? String(job.posted_at).slice(0, 10) : ""].filter(Boolean).join(" · ");
         return `
         <article class="job-card" role="listitem"
           tabindex="0"
-          aria-label="${job.title} at ${job.company}"
-          onclick="location.href='/pages/job-details.html?id=${job.id}'"
-          onkeydown="if(event.key==='Enter'||event.key===' '){location.href='/pages/job-details.html?id=${job.id}'}">
+          aria-label="${esc(job.title)} at ${esc(job.company)}"
+          onclick="location.href='/pages/job-details.html?id=${encodeURIComponent(job.id)}'"
+          onkeydown="if(event.key==='Enter'||event.key===' '){location.href='/pages/job-details.html?id=${encodeURIComponent(job.id)}'}">
           <div class="card-top">
-            <div class="company-avatar ${av.cls}" aria-hidden="true">${av.abbr}</div>
-            <span class="posted-chip">${job.posted}</span>
+            <div class="company-avatar ${av.cls}" aria-hidden="true">${abbr}</div>
+            <span class="posted-chip">${esc(meta)}</span>
           </div>
-          <div class="job-title">${job.title}</div>
-          <div class="job-company">${job.company}</div>
+          <div class="job-title">${esc(job.title)}</div>
+          <div class="job-company">${esc(job.company)}</div>
           <div class="tag-row" aria-label="Location and type">
             <span class="tag tag-neutral">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline;vertical-align:-1px;margin-right:3px" aria-hidden="true"><path d="M6 1a3.5 3.5 0 013.5 3.5C9.5 7.5 6 11 6 11S2.5 7.5 2.5 4.5A3.5 3.5 0 016 1z" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="4.5" r="1.25" stroke="currentColor" stroke-width="1.1"/></svg>${job.location}
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline;vertical-align:-1px;margin-right:3px" aria-hidden="true"><path d="M6 1a3.5 3.5 0 013.5 3.5C9.5 7.5 6 11 6 11S2.5 7.5 2.5 4.5A3.5 3.5 0 016 1z" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="4.5" r="1.25" stroke="currentColor" stroke-width="1.1"/></svg>${esc(job.location || "—")}
             </span>
-            <span class="tag tag-neutral">${job.type}</span>
+            ${job.type ? `<span class="tag tag-neutral">${esc(job.type)}</span>` : ""}
           </div>
-          <p class="job-description">${job.description}</p>
+          <p class="job-description">${esc((job.description || "").slice(0, 200))}</p>
           <div class="tag-row" aria-label="Required skills">
-            ${job.tags.map(t=>`<span class="tag tag-default">${t}</span>`).join('')}
+            ${(job.tags || []).slice(0, 5).map(t=>`<span class="tag tag-default">${esc(t)}</span>`).join('')}
           </div>
           <div class="card-footer">
-            <span class="salary-text">${job.salary}</span>
-            <a href="/pages/job-details.html?id=${job.id}"
+            <span class="salary-text">${esc(job.salary || "")}</span>
+            <a href="/pages/job-details.html?id=${encodeURIComponent(job.id)}"
                class="card-link"
-               aria-label="View details for ${job.title}"
+               aria-label="View details for ${esc(job.title)}"
                onclick="event.stopPropagation()">
               View role
               <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -576,7 +597,7 @@
       } catch(e) {}
     }
 
-    renderJobs();
+    loadJobs();
     loadUser();
   </script>
 </body>

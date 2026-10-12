@@ -180,6 +180,12 @@
                 <div class="error-message" id="emailError">Please enter a valid email</div>
             </div>
 
+            <div class="form-group">
+                <label for="password">Password (min 8 chars, for account + history sync)</label>
+                <input type="password" id="password" required minlength="8" placeholder="••••••••" autocomplete="current-password">
+                <div class="error-message" id="passwordError">Password must be at least 8 characters</div>
+            </div>
+
             <button type="submit">Get Started</button>
 
             <div class="divider">or continue with</div>
@@ -192,12 +198,13 @@
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
 
             // Validation
             let isValid = true;
@@ -223,11 +230,47 @@
                 document.getElementById('emailError').style.display = 'none';
             }
 
+            if (!password || password.length < 8) {
+                document.getElementById('passwordError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('passwordError').style.display = 'none';
+            }
+
             if (isValid) {
+                const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+                const name = `${firstName} ${lastName}`;
+                // Real backend auth (falls back to local-only if backend is down)
+                try {
+                    let r = await fetch("/auth/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, password }),
+                    });
+                    if (r.status === 401) {
+                        r = await fetch("/auth/register", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name, email, password }),
+                        });
+                    }
+                    if (r.ok) {
+                        const data = await r.json();
+                        localStorage.setItem('user', JSON.stringify({
+                            name: data.user.name || name,
+                            email: data.user.email || email,
+                            initials,
+                            token: data.token,
+                            createdAt: new Date().toISOString()
+                        }));
+                        window.location.href = '/';
+                        return;
+                    }
+                } catch (e) { /* backend down -> local fallback below */ }
                 const user = {
-                    name: `${firstName} ${lastName}`,
+                    name: name,
                     email: email,
-                    initials: `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase(),
+                    initials: initials,
                     createdAt: new Date().toISOString()
                 };
 

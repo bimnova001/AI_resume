@@ -1,0 +1,42 @@
+# Usage:
+#   cp .env.example .env   # then fill in keys (optional for basic use)
+#   docker compose up --build
+# Open http://localhost:3000 (frontend) · API docs at http://localhost:8000/docs
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - model-cache:/app/model_cache
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      DB_PATH: "/app/data/app.db"
+      # Uncomment for low-RAM dev (MiniLM instead of BGE-M3):
+      # USE_SMALL_EMBEDDING: "1"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      BACKEND_URL: "http://api:8000"
+      MAX_UPLOAD_MB: "10"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  model-cache:

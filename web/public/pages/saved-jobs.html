@@ -239,12 +239,7 @@
             <p class="page-subtitle">Jobs you've bookmarked for later review</p>
         </div>
 
-        <div class="empty-state" data-aos="zoom-in-up" data-aos-duration="800">
-            <div class="empty-icon" ></div>
-            <div class="empty-title">No Saved Jobs Yet</div>
-            <p class="empty-text">Start exploring job listings and save positions that interest you.</p>
-            <a href="/pages/job-listings.html" class="btn-primary">Browse Jobs</a>
-        </div>
+        <div id="savedContainer" role="list" aria-label="Saved jobs"></div>
     </div>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
@@ -269,7 +264,63 @@
             document.getElementById('userInitial').textContent = user.initials || user.name.charAt(0).toUpperCase();
         }
 
+        function escapeHtml(value) {
+            return String(value == null ? "" : value)
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function emptyState(title, text, cta) {
+            document.getElementById('savedContainer').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"></div>
+                    <div class="empty-title">${escapeHtml(title)}</div>
+                    <p class="empty-text">${escapeHtml(text)}</p>
+                    ${cta || '<a href="/pages/job-listings.html" class="btn-primary">Browse Jobs</a>'}
+                </div>`;
+        }
+
+        async function loadSaved() {
+            let user = {};
+            try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch (e) {}
+            if (!user.token) {
+                emptyState("Log in required",
+                    "Log in to sync saved jobs with your account.",
+                    '<a href="/pages/login.html" class="btn-primary">Log in</a>');
+                return;
+            }
+            let jobs = [];
+            try {
+                const r = await fetch("/saved-jobs", {
+                    headers: { "Authorization": `Bearer ${user.token}` },
+                });
+                if (r.status === 401) {
+                    emptyState("Session expired", "Please log in again.",
+                        '<a href="/pages/login.html" class="btn-primary">Log in</a>');
+                    return;
+                }
+                jobs = (await r.json()).jobs || [];
+            } catch (e) {
+                emptyState("Could not load saved jobs", "Check the server and retry.");
+                return;
+            }
+            if (!jobs.length) {
+                emptyState("No Saved Jobs Yet",
+                    "Start exploring job listings and save positions that interest you.");
+                return;
+            }
+            document.getElementById('savedContainer').innerHTML = jobs.map(j => `
+                <div class="empty-state" style="text-align:left;padding:24px 28px;margin-bottom:12px" role="listitem">
+                    <div class="empty-title" style="font-size:1.1rem">${escapeHtml(j.title)}</div>
+                    <p class="empty-text" style="margin-bottom:12px">${escapeHtml(j.company || "")} · ${escapeHtml(j.location || "")} · via ${escapeHtml(j.source || "")}</p>
+                    <a href="/pages/job-details.html?id=${encodeURIComponent(j.id)}" class="btn-primary">View</a>
+                    ${j.url ? `<a href="${escapeHtml(j.url)}" target="_blank" rel="noopener" class="btn-primary" style="margin-left:8px">Apply ↗</a>` : ""}
+                </div>`).join("");
+        }
+
         loadUserInfo();
+        loadSaved();
     </script>
 </body>
 </html>

@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+.gitignore
+node_modules/
+web/node_modules/
+model_cache/
+data/
+logs/
+uploads/
+temp/
+web/temp/
+.env
+.env.local
+*.db
+*.log

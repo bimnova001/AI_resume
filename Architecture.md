@@ -6,12 +6,12 @@ PDF Parser
     ▼
 Resume Text
     │
-    ├──► BGE-M3
+    ├──► BGE-M3 (or all-MiniLM-L6-v2 when USE_SMALL_EMBEDDING=1)
     │        │
     │        ▼
-    │   Similarity Score
+    │   Similarity Score (job-title expanded + normalized cosine)
     │
-    └──► Qwen2.5-7B
+    └──► Qwen2.5-3B-Instruct-GGUF (lazy-loaded, LLM_REPO/LLM_FILE/LLM_CTX/LLM_THREADS)
              │
              ▼
        AI Analysis
@@ -28,7 +28,7 @@ Frontend (Node.js + Express/Next.js)
             │
     ┌───────┴────────┐
     ▼                ▼
- BGE-M3       Qwen2.5-7B
+ BGE-M3       Qwen2.5-3B-Instruct
  Matching      Analysis
     │                │
     └───────┬────────┘

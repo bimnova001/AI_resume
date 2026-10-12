@@ -112,13 +112,13 @@ Recommended:
 
 ## Embedding Model
 
-**BGE-M3**
+**BGE-M3** (default; set `USE_SMALL_EMBEDDING=1` to use `all-MiniLM-L6-v2` for low-RAM dev)
 
 Used for:
 
 * Resume embedding
 * Job description matching
-* Semantic similarity search
+* Semantic similarity search (normalized cosine; short job titles are expanded before encoding)
 
 ## Language Model
 
@@ -141,7 +141,6 @@ Used for:
 * FastAPI
 * PyMuPDF
 * Sentence Transformers
-* FAISS
 
 ## AI
 
@@ -154,11 +153,61 @@ Used for:
 * CSS
 * JavaScript
 
-## Data Sources
+## Data Sources (jobs — 100% real postings, no mock data)
 
-* Hacker News API
-* GitHub Trending
-* Technology News API
+Free, no key (all verified live, ~130+ postings per refresh):
+
+* Remotive, Arbeitnow, Remote OK, Jobicy, The Muse — `POST /jobs/refresh`
+* Optional keys: Adzuna (`ADZUNA_APP_ID`/`ADZUNA_APP_KEY`), Google Jobs via SerpApi (`SERPAPI_KEY`)
+* LinkedIn / Facebook: reserved adapter slots in `model/job_sources.py`
+  (no free public API — plug official API access when available)
+* Every posting stored in SQLite (`DB_PATH`, default `./data/app.db`) with
+  title, company, location, type, salary, description, **original URL + posted date + fetched date**
+* Server-side search: `GET /jobs?q=&location=&source=&job_type=&limit=&offset=`
+* **Server pulls by itself** — users never fetch manually:
+  `model/job_service.py` seeds on first boot when empty + re-fetches every
+  `JOBS_REFRESH_HOURS` (default 6); `GET /jobs/status` shows total,
+  last fetch time, per-source counts and whether a fetch is running;
+  `JOBS_AUTO_SEED=0` / `JOBS_AUTO_REFRESH=0` to disable
+
+## Service Dashboard (`/pages/admin.html`)
+
+* DB stats (file size, rows per table, jobs per source), fetch status,
+  latest 10 postings with link + posted date, recent service logs
+* Buttons: refresh now, live per-source check (read-only, nothing stored)
+* Read-only APIs: `GET /admin/stats`, `GET /admin/logs`, `GET /admin/source-check`
+* Open the site via **http://localhost:3000** (Node proxy); if a page is served
+  from elsewhere, `/js/api.js` talks to the backend directly (`?api=host:port` to override)
+
+## Auth / History (new)
+
+* `POST /auth/register`, `POST /auth/login` → Bearer token
+* `GET /me`, `GET /history`, `POST /jobs/{id}/save`, `GET /saved-jobs`
+* `/analyze` accepts `Authorization: Bearer <token>`, records history and
+  returns **`suggested_jobs`: top-3 real postings ranked by embedding
+  similarity to the resume** (`model/matcher.py`), each with match %,
+  matched skills, reason, original URL and posted date
+* Events also land in `app_logs` table + file logs
+
+## Tests
+
+```
+pytest tests/ test.py -v     # 64 tests, no GPU/model download needed
+```
+
+## Docker
+
+```
+cp .env.example .env   # optional (works without keys for basic use)
+docker compose up --build
+```
+
+* Frontend → http://localhost:3000 · API → http://localhost:8000/docs
+* First API start downloads ~4 GB of models into the `model-cache` volume
+  (slow once, then cached). DB persists in `./data/`.
+* Low-RAM dev: set `USE_SMALL_EMBEDDING=1` on the `api` service.
+* Without docker: `pip install -r requirements.txt && python app.py`
+  (spawns the Node frontend automatically).
 
 ---
 
