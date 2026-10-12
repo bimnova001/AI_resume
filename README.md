@@ -197,8 +197,11 @@ pytest tests/ test.py -v     # 64 tests, no GPU/model download needed
 
 ## Docker
 
+Prerequisites: Docker Desktop **running**, ~8 GB RAM, ~15 GB free disk
+(API image is big: PyTorch + compiled llama + ~4 GB models on first run).
+
 ```
-cp .env.example .env   # optional (works without keys for basic use)
+cp .env.example .env   # Windows: copy .env.example .env (optional, works without keys)
 docker compose up --build
 ```
 
@@ -208,6 +211,22 @@ docker compose up --build
 * Low-RAM dev: set `USE_SMALL_EMBEDDING=1` on the `api` service.
 * Without docker: `pip install -r requirements.txt && python app.py`
   (spawns the Node frontend automatically).
+
+| อยากทำอะไร | คำสั่ง |
+|---|---|
+| รันทั้งระบบ (แนะนำ) | `docker compose up --build` |
+| รันเบื้องหลัง | `docker compose up --build -d` |
+| ดู log | `docker compose logs -f [api\|web]` |
+| หยุด | `docker compose down` |
+| build ใหม่เฉพาะ web | `docker compose build web` |
+| build API อย่างเดียว | `docker build -t ai-resume-api .` |
+| build web อย่างเดียว | `docker build -f web/Dockerfile.web -t ai-resume-web ./web` |
+| ล้าง DB เริ่มใหม่ | `docker compose down && rm ./data/app.db && docker compose up` |
+
+Troubleshooting: `docker build .` ต้องมี `Dockerfile` ที่ root (มีแล้ว) —
+ถ้าเจอ `open Dockerfile: no such file` แปลว่ารันผิดโฟลเดอร์;
+พอร์ตชนให้ปิด process เก่าที่ฟัง 3000/8000 ก่อน;
+build API ครั้งแรก 15–40 นาทีเป็นเรื่องปกติ.
 
 ---
 
