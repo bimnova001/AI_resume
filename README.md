@@ -122,7 +122,7 @@ Used for:
 
 ## Language Model
 
-**Qwen2.5-3B-Instruct**
+**Qwen2.5-7B-Instruct (Q4_K_M, chat JSON mode + 1 repair retry)**
 
 Used for:
 
@@ -145,7 +145,7 @@ Used for:
 ## AI
 
 * BGE-M3
-* Qwen2.5-3B-Instruct
+* Qwen2.5-7B-Instruct (Q4_K_M)
 
 ## Frontend
 
@@ -197,7 +197,7 @@ pytest tests/ test.py -v     # 64 tests, no GPU/model download needed
 
 ## Docker
 
-Prerequisites: Docker Desktop **running**, ~8 GB RAM, ~15 GB free disk
+Prerequisites: Docker Desktop **running**, ~8 GB RAM, ~20 GB free disk
 (API image is big: PyTorch + compiled llama + ~4 GB models on first run).
 
 ```
@@ -206,7 +206,7 @@ docker compose up --build
 ```
 
 * Frontend → http://localhost:3000 · API → http://localhost:8000/docs
-* First API start downloads ~4 GB of models into the `model-cache` volume
+* First API start downloads ~7 GB of models into the `model-cache` volume
   (slow once, then cached). DB persists in `./data/`.
 * Low-RAM dev: set `USE_SMALL_EMBEDDING=1` on the `api` service.
 * Without docker: `pip install -r requirements.txt && python app.py`

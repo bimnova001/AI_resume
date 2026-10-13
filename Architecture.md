@@ -11,7 +11,7 @@ Resume Text
     │        ▼
     │   Similarity Score (job-title expanded + normalized cosine)
     │
-    └──► Qwen2.5-3B-Instruct-GGUF (lazy-loaded, LLM_REPO/LLM_FILE/LLM_CTX/LLM_THREADS)
+    └──► Qwen2.5-7B-Instruct-GGUF Q4_K_M (lazy-loaded, JSON mode, LLM_REPO/LLM_FILE/LLM_CTX/LLM_THREADS)
              │
              ▼
        AI Analysis
@@ -28,7 +28,7 @@ Frontend (Node.js + Express/Next.js)
             │
     ┌───────┴────────┐
     ▼                ▼
- BGE-M3       Qwen2.5-3B-Instruct
+ BGE-M3       Qwen2.5-7B-Instruct
  Matching      Analysis
     │                │
     └───────┬────────┘
