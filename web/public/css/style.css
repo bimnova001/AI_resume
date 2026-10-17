@@ -59,8 +59,9 @@ body {
     gap: 12px;
 }
 
-.hero-actions label,
-.hero-actions select {
+/* Only the plain select stretches; the language picker must stay a compact
+   chip sized to its label (it also lives in the navbar on other pages). */
+.hero-actions select:not(.lang-select) {
     width: 100%;
 }
 
@@ -71,6 +72,34 @@ body {
     color: #0f172a;
     font-family: inherit;
     font-weight: 500;
+}
+
+/* Sized to its own label instead of stretching (used inside forms/headers) */
+.lang-select--compact {
+    appearance: none;
+    -webkit-appearance: none;
+    width: auto;
+    min-width: 120px;
+    max-width: 190px;
+    flex: 0 0 auto;
+    padding: 12px 34px 12px 14px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 14px;
+    background-color: #ffffff;
+    color: #0f172a;
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='%234338ca' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.lang-select--compact option {
+    padding: 10px 12px;
+    font-size: 1rem;
 }
 
 .lang-select option:checked {
