@@ -23,9 +23,8 @@
       const tmp = document.createElement('div');
       tmp.innerHTML = html;
 
-      // Insert HTML nodes only — SKIP <script> tags
-      // navbar.js owns all event binding via init() below
-      // to avoid double-bind and the "closes immediately" bug
+      // Skip <script> tags: navbar.js owns all event binding via init() below,
+      // and double-binding makes the dropdown "close immediately".
       Array.from(tmp.childNodes).forEach(node => {
         if (node.nodeName === 'SCRIPT') return;
         placeholder.before(node.cloneNode(true));
@@ -33,14 +32,14 @@
 
       placeholder.remove();
       init();
-      // Apply current language to navbar elements.
-      // i18n.js loads async from CDN — wait for readiness instead of
-      // calling applyLang immediately (race condition fix).
       applyNavbarLang();
     })
     .catch(err => console.error('[navbar.js]', err));
 
   function applyNavbarLang() {
+    // i18n.js loads async from CDN, so wait for readiness instead of calling
+    // applyLang immediately (race condition). The failure path keeps the
+    // default-language markup usable when the CDN is unreachable.
     const apply = () => {
       try {
         if (typeof I18n !== "undefined" && I18n.applyLang) I18n.applyLang(I18n.getLang());
@@ -50,7 +49,6 @@
       apply();
     } else {
       document.addEventListener('i18n:ready', apply, { once: true });
-      // If CDN failed, don't hang: apply defaults on failure too.
       document.addEventListener('i18n:failed', apply, { once: true });
     }
   }
@@ -78,24 +76,21 @@
     const userMenu = document.getElementById('userMenu');
     if (!userBtn || !userMenu) return;
 
-    // Toggle dropdown
-    userBtn.addEventListener('click', e => {
+        userBtn.addEventListener('click', e => {
       e.stopPropagation(); // ← critical: prevents document click from closing immediately
       const isOpen = !userMenu.classList.contains('hidden');
       userMenu.classList.toggle('hidden', isOpen);
       userBtn.setAttribute('aria-expanded', String(!isOpen));
     });
 
-    // Close when clicking anywhere outside
-    document.addEventListener('click', e => {
+        document.addEventListener('click', e => {
       if (!userBtn.contains(e.target) && !userMenu.contains(e.target)) {
         userMenu.classList.add('hidden');
         userBtn.setAttribute('aria-expanded', 'false');
       }
     });
 
-    // Close on Escape
-    document.addEventListener('keydown', e => {
+        document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         userMenu.classList.add('hidden');
         userBtn.setAttribute('aria-expanded', 'false');
@@ -103,8 +98,7 @@
       }
     });
 
-    // Logout
-    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
       localStorage.removeItem('user');
       window.location.href = '/pages/login.html';
     });

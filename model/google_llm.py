@@ -28,7 +28,6 @@ TIMEOUT = 120.0
 RETRIES_PER_MODEL = 1
 BACKOFF = 3.0
 
-# Tried in order after the configured primary (deduped at runtime).
 FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-3.5-flash",
                    "gemini-3.6-flash", "gemini-3.1-flash-lite"]
 

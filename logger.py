@@ -6,13 +6,12 @@ from logging.handlers import RotatingFileHandler
 log_folder = "logs"
 os.makedirs(log_folder, exist_ok=True)
 
-current_date = datetime.now().strftime("%Y-%m-%d")  # รูปแบบวันที่ เช่น 2025-04-11
+current_date = datetime.now().strftime("%Y-%m-%d")
 log_filename = os.path.join(log_folder, f"ai_resume_{current_date}.log")
 
 log_level_name = os.getenv("LOG_LEVEL", "INFO").strip().upper()
 log_level = getattr(logging, log_level_name, logging.INFO)
 
-# สร้าง Logger สำหรับใช้งานในไฟล์อื่น
 logger = logging.getLogger("AiResumeLogger")
 logger.setLevel(log_level)
 
@@ -21,7 +20,6 @@ if not logger.handlers:
         "%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    # File handler with rotation (5 MB x 3 backups) + console output
     file_handler = RotatingFileHandler(
         log_filename, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
     )

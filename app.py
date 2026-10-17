@@ -87,9 +87,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize translator (may be None if googletrans failed to import — see above)
 
-# Request model for translation
 class TranslateRequest(BaseModel):
     text: str
     target_lang: str = "th"
@@ -151,7 +149,6 @@ def _current_user_id(authorization=None):
     return user["id"] if user else None
 
 
-# googletrans destination codes per UI language.
 TRANSLATE_DEST = {"zh": "zh-cn"}
 
 
@@ -168,7 +165,6 @@ async def translate_text(req: TranslateRequest):
 
         dest = TRANSLATE_DEST.get((req.target_lang or "th").strip().lower(),
                                   (req.target_lang or "th").strip().lower() or "th")
-        # googletrans can be slow sometimes, adding delay tolerance
         result = await asyncio.wait_for(
             asyncio.to_thread(translator.translate, req.text, dest),
             timeout=30.0
@@ -265,9 +261,9 @@ async def analyze(
             logger.warning(
                 f"LLM output unparseable (len={len(llm_result or '')}): {head}...")
 
-        # AI job picks: top-3 real postings matching this resume (best effort).
+        # Top-3 real postings: pre-filter by the requested title/type + resume
         # Pre-filtered by the requested title/type + resume keywords, so the
-        # embedding model only ever scores a capped handful — never bulk jobs.
+        # keywords, so the embedding model never sees the bulk job list.
         try:
             suggested_jobs = matcher.suggest_jobs(
                 resume_text, limit=3, job_title=job_title, job_type=job_type)
@@ -275,7 +271,6 @@ async def analyze(
             logger.warning(f"Job suggestion failed: {e}")
             suggested_jobs = []
 
-        # Ensure job_match is a rounded number
         try:
             job_match_val = round(float(similarity), 2)
         except Exception:
@@ -288,7 +283,6 @@ async def analyze(
         except (TypeError, ValueError):
             resume_score = None
 
-        # Best-effort history (only when a valid Bearer token is provided).
         history_id = None
         try:
             user_id = _current_user_id(authorization)
@@ -322,7 +316,6 @@ async def analyze(
         logger.error(f"Error during analysis: {e}")
         raise HTTPException(status_code=500, detail="Analysis failed")
     finally:
-        # Always clean up the temp upload — no leftover files.
         try:
             if os.path.isfile(pdf_path):
                 os.remove(pdf_path)
@@ -339,7 +332,6 @@ async def get_hackernews():
             top_ids = top_ids_resp.json()
 
             stories = []
-            # Fetch first 10 stories in parallel
             tasks = [client.get(f"https://hacker-news.firebaseio.com/v0/item/{story_id}.json", timeout=10) for story_id in top_ids[:10]]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -412,7 +404,6 @@ async def get_newsapi():
 @app.post("/analyze-market")
 async def analyze_market():
     logger.info("Starting market analysis")
-    # Fetch all data sources in parallel
     hacker_news_task = get_hackernews()
     github_trending_task = asyncio.to_thread(get_github_trending)
     tech_news_task = get_newsapi()
@@ -695,7 +686,7 @@ def runnodejs():
         root = os.path.dirname(os.path.abspath(__file__))
         script = os.path.join(root, "web", "server.js")
         env = dict(os.environ)
-        # Keep Node -> backend on 127.0.0.1 (see server.js note about localhost).
+        # Node must reach the backend before uvicorn starts.
         env.setdefault("BACKEND_URL",
                        f"http://127.0.0.1:{os.getenv('PORT', '8000')}")
         process = subprocess.Popen(

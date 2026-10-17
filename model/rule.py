@@ -30,7 +30,6 @@ _PATTERNS = {
     "linkedin": [r"linkedin\.com/\S+"],
 }
 
-# Heuristic: a section counts as present if a header pattern matches.
 # Contact patterns are informational only (not required sections).
 
 

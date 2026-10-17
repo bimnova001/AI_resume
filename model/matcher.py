@@ -89,7 +89,6 @@ def suggest_jobs(resume_text, limit=3, candidate_cap=10, job_title="",
     try:
         candidates, seen = [], set()
 
-        # 0) What the user asked for: title/type matches first.
         if isinstance(job_title, str) and job_title.strip():
             try:
                 out = db.list_jobs(q=job_title.strip(), limit=candidate_cap,
@@ -106,7 +105,6 @@ def suggest_jobs(resume_text, limit=3, candidate_cap=10, job_title="",
             except Exception:
                 pass
 
-        # 1) Cheap pre-filter: union of per-keyword searches.
         keywords = extract_keywords(resume_text)
         if keywords:
             for kw in keywords[:8]:
@@ -120,7 +118,6 @@ def suggest_jobs(resume_text, limit=3, candidate_cap=10, job_title="",
         if not candidates:
             return []
 
-        # 2) Accurate re-rank with embeddings (capped set only).
         scored = []
         for job in candidates:
             try:
@@ -132,7 +129,6 @@ def suggest_jobs(resume_text, limit=3, candidate_cap=10, job_title="",
             scored.append((score, skills, job))
         scored.sort(key=lambda t: t[0], reverse=True)
 
-        # 3) shape results with human-readable reasons
         results = []
         for score, skills, job in scored[:max(1, limit)]:
             skill_txt = ", ".join(skills) if skills else "overall profile fit"

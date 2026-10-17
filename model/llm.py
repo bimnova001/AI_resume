@@ -53,7 +53,6 @@ def get_llm():
     return _llm
 
 
-# Backwards-compatible global (loads lazily on first use below, not at import).
 class _LazyLlama:
     def __getattr__(self, name):
         return getattr(get_llm(), name)

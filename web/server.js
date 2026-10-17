@@ -68,7 +68,6 @@ app.post("/analyze", upload.single("resume"), async (req, res) => {
         const status = err.response?.status || 500;
         res.status(status).json(proxyError(err, "Analyze failed"));
     } finally {
-        // always cleanup temp file
         if (req.file) fs.unlink(req.file.path, () => {});
     }
 });
@@ -91,7 +90,6 @@ app.post("/translate", async (req, res) => {
         res.json({ translatedText });
     } catch (err) {
         console.error("Translation error:", err.message);
-        // Return original text if translation fails
         res.json({ translatedText: req.body.text || "" });
     }
 });

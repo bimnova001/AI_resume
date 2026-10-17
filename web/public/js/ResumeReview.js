@@ -12,8 +12,8 @@ const MT_DEST = { zh: "zh-cn" };
 function mtDest(lang) { return MT_DEST[lang] || lang || "en"; }
 function currentLang() { return (langSelect && langSelect.value) || "en"; }
 
-// Shared helpers live in /js/json-util.js (single source of truth).
-// Fall back to local copies if the script failed to load.
+// Shared helpers live in /js/json-util.js; local copies keep the page
+// working if that script failed to load.
 const escapeHtml = window.escapeHtml || function (value) {
     return String(value == null ? "" : value)
         .replace(/&/g, "&amp;")
@@ -142,8 +142,7 @@ const normalizeArray = window.normalizeArray || function (items) {
                 const parsed = JSON.parse(trimmed);
                 return Array.isArray(parsed) ? parsed : [parsed];
             } catch {
-                // fall through to split
-            }
+                            }
         }
         if (trimmed.includes("\n")) {
             return trimmed.split(/\r?\n/).map(item => item.trim()).filter(item => item);
@@ -186,7 +185,6 @@ async function renderAnalysis(data, lang) {
     if (lang !== "en") {
         analysis = await translateAnalysisObject(analysis, lang);
     }
-
     const heading = T("resume.heading", "Resume Analysis");
     const summaryLabel = T("resume.summary", "Summary");
     const strengthsLabel = T("resume.strengths", "Strengths");
@@ -201,12 +199,10 @@ async function renderAnalysis(data, lang) {
     const noComment = T("resume.noComment", "No comment");
     const yesNo = v => v ? T("resume.yes", "Yes") : T("resume.no", "No");
 
-    // If analysis couldn't be parsed, still show minimal UI
-    const resumeScore = analysis?.resume_score ?? null;
+        const resumeScore = analysis?.resume_score ?? null;
     const matchPct = data.job_match ?? (resumeScore ?? 0);
 
-    // Build main match card with progress bar
-    const scoreDisplay = (resumeScore !== null && resumeScore !== undefined && resumeScore !== "")
+        const scoreDisplay = (resumeScore !== null && resumeScore !== undefined && resumeScore !== "")
         ? Number(resumeScore).toFixed(2)
         : (matchPct !== null ? Number(matchPct).toFixed(2) : "--");
 
@@ -241,8 +237,8 @@ async function renderAnalysis(data, lang) {
         </div>
     `;
 
-    // Summary (if the AI reply wasn't structured JSON, show the raw text
-    // instead of empty cards so nothing silently disappears)
+    // If the AI reply wasn't structured JSON, show the raw text instead of
+    // empty cards so nothing silently disappears.
     const rawFallback = (!analysis && typeof data.analysis === "string" && data.analysis.trim())
         ? data.analysis.trim() : null;
     const note = T("resume.rawNote", " (AI reply was not structured JSON — showing raw text, see backend log)");
@@ -253,24 +249,20 @@ async function renderAnalysis(data, lang) {
         </div>
     `;
 
-    // Lists grid
-    out += `<div class="sections-grid">`;
+        out += `<div class="sections-grid">`;
     out += `<div class="result-section list-card"><h3>${strengthsLabel}</h3>${renderList('', analysis?.strengths ?? [])}</div>`;
     out += `<div class="result-section list-card"><h3>${weaknessesLabel}</h3>${renderList('', analysis?.weaknesses ?? [])}</div>`;
     out += `<div class="result-section list-card"><h3>${missingSkillsLabel}</h3>${renderChips(analysis?.missing_skills ?? [])}</div>`;
     out += `</div>`;
 
-    // Recommendations (projects, certificates, careers, actions)
-    out += `<div class="sections-grid" style="margin-top:8px">`;
+        out += `<div class="sections-grid" style="margin-top:8px">`;
     out += `<div class="result-section list-card"><h3>${projectsLabel}</h3>${renderList('', analysis?.recommended_projects ?? [])}</div>`;
     out += `<div class="result-section list-card"><h3>${certificatesLabel}</h3>${renderList('', analysis?.recommended_certificates ?? [])}</div>`;
     out += `<div class="result-section list-card"><h3>${careersLabel}</h3>${renderList('', analysis?.career_paths ?? [])}</div>`;
     out += `</div>`;
 
-    // Actions
-    out += `<div class="result-section" style="margin-top:8px"><h3>${escapeHtml(actionsLabel)}</h3>${renderList('', analysis?.recommended_actions ?? [])}</div>`;
+        out += `<div class="result-section" style="margin-top:8px"><h3>${escapeHtml(actionsLabel)}</h3>${renderList('', analysis?.recommended_actions ?? [])}</div>`;
 
-    // AI-picked jobs from the real postings DB (top-3 for this resume)
     out += renderSuggestedJobs(data.suggested_jobs ?? [], lang);
 
     return out;
