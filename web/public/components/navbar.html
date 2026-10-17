@@ -21,7 +21,7 @@
             <li><a href="/pages/admin.html" data-i18n="nav.service">Service</a></li>
         </ul>
 
-        <select class="lang-select" id="navbarLang" aria-label="Language"></select>
+        <select class="lang-select" id="navbarLang" aria-label="Language" style="width:152px;min-width:152px;max-width:152px;flex:0 0 152px"></select>
 
         <div class="nav-user">
             <button id="userBtn"
@@ -179,17 +179,21 @@ nav {
 .lang-select {
     appearance: none;
     -webkit-appearance: none;
+    width: 152px;
+    min-width: 152px;
+    max-width: 152px;
+    flex: 0 0 152px;
     background-color: #ffffff;
     color: var(--text-primary);
     border: 1.5px solid var(--border-strong);
     border-radius: 10px;
-    padding: 8px 30px 8px 12px;
+    padding: 8px 28px 8px 12px;
     font-family: var(--font);
     font-size: .85rem;
     font-weight: 600;
     line-height: 1.2;
+    text-overflow: ellipsis;
     cursor: pointer;
-    flex-shrink: 0;
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='%234338ca' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 9px center;

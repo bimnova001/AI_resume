@@ -14,7 +14,7 @@
     return;
   }
 
-  fetch(NAVBAR_PATH)
+  fetch(NAVBAR_PATH, { cache: 'no-store' })
     .then(r => {
       if (!r.ok) throw new Error(`navbar fetch failed: ${r.status}`);
       return r.text();
