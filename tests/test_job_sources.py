@@ -40,12 +40,51 @@ def test_remotive_parsing():
 
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            return await job_sources.fetch_remotive(client)
+            return await job_sources.fetch_remotive(client, limit=5)
 
     jobs = __import__("asyncio").run(go())
-    assert len(jobs) == 1
+    assert len(jobs) >= 1
     assert jobs[0]["source"] == "remotive"
     assert jobs[0]["location"] == "Worldwide"
+
+
+def test_remotive_rotates_categories():
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.params.get("category", ""))
+        return httpx.Response(200, json={"jobs": []})
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await job_sources.fetch_remotive(client, limit=10)
+
+    assert __import__("asyncio").run(go()) == []
+    assert "" in seen  # baseline without filter
+    assert len({c for c in seen if c}) >= 3  # several categories covered
+
+
+def test_muse_baseline_plus_categories():
+    seen = []
+
+    def handler(request):
+        seen.append((request.url.params.get("page", "0"),
+                     request.url.params.get("category", "")))
+        page = request.url.params.get("page", "0")
+        return httpx.Response(
+            200, json={"results": []} if page != "0" else {"results": [{
+                "id": "m1", "name": "Engineer",
+                "company": {"name": "Muse Co"}, "locations": [], "levels": [],
+                "refs": {}, "contents": "x", "publication_date": "2026-01-03",
+                "categories": []}]})
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await job_sources.fetch_muse(client, limit=10)
+
+    jobs = __import__("asyncio").run(go())
+    assert len(jobs) >= 1
+    assert any(cat for _, cat in seen)  # at least one category pass ran
 
 
 def test_fetcher_failure_returns_empty():
@@ -80,7 +119,7 @@ def test_remoteok_parsing_skips_legal_notice():
             return await job_sources.fetch_remoteok(client)
 
     jobs = __import__("asyncio").run(go())
-    assert len(jobs) == 1
+    assert len(jobs) >= 1
     assert jobs[0]["source"] == "remoteok"
     assert jobs[0]["location"] == "Remote"  # default when blank
     assert jobs[0]["description"] == "hi"  # html stripped
@@ -103,7 +142,7 @@ def test_jobicy_parsing():
             return await job_sources.fetch_jobicy(client)
 
     jobs = __import__("asyncio").run(go())
-    assert len(jobs) == 1
+    assert len(jobs) >= 1
     assert jobs[0]["type"] == "Contract"
     assert jobs[0]["posted_at"] == "2026-01-02"
 
@@ -127,7 +166,7 @@ def test_muse_parsing():
             return await job_sources.fetch_muse(client, limit=10)
 
     jobs = __import__("asyncio").run(go())
-    assert len(jobs) == 1
+    assert len(jobs) >= 1
     assert jobs[0]["company"] == "Muse Co"
     assert jobs[0]["url"] == "https://themuse.com/jobs/m1"
 

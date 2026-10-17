@@ -36,6 +36,13 @@
   });
 })();
 
+/* Supported UI languages (10). MUST match the web/locales directories. */
+const SUPPORTED_LANGS = [
+  ['en', 'English'], ['th', 'ไทย'], ['zh', '中文'], ['ja', '日本語'],
+  ['ko', '한국어'], ['vi', 'Tiếng Việt'], ['id', 'Bahasa Indonesia'],
+  ['ms', 'Bahasa Melayu'], ['hi', 'हिन्दी'], ['es', 'Español'],
+];
+
 function initI18next() {
   if (typeof i18next === 'undefined' || typeof i18nextHttpBackend === 'undefined') {
     console.warn('[i18n] CDN scripts missing, skipping init (fallback language).');
@@ -49,8 +56,8 @@ function initI18next() {
       // ภาษา fallback ถ้า detect ไม่ได้
       fallbackLng: 'en',
 
-      // ภาษาที่รองรับ
-      supportedLngs: ['en', 'th'],
+      // ภาษาที่รองรับ (10 ภาษา — ตรงกับ web/locales/*/)
+      supportedLngs: SUPPORTED_LANGS.map(l => l[0]),
 
       // ดึง JSON จาก server
       backend: {
@@ -105,9 +112,26 @@ function applyTranslations() {
   // sync <html lang>
   document.documentElement.lang = i18next.language;
 
-  // sync language dropdowns
+  // sync language dropdowns (options injected if empty)
   document.querySelectorAll('.lang-select').forEach(sel => {
-    sel.value = i18next.language.split('-')[0]; // 'th-TH' → 'th'
+    const cur = i18next.language.split('-')[0]; // 'th-TH' → 'th'
+    if (!sel.options.length && typeof SUPPORTED_LANGS !== 'undefined') {
+      SUPPORTED_LANGS.forEach(([code, label]) => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = label;
+        // Explicit colors: browsers otherwise render the native dropdown with
+        // the select's text color, which can be white-on-white (invisible).
+        opt.style.backgroundColor = "#ffffff";
+        opt.style.color = "#0f172a";
+        sel.appendChild(opt);
+      });
+    }
+    sel.value = cur;
+    if (!sel.dataset.i18nBound) {
+      sel.dataset.i18nBound = '1';
+      sel.addEventListener('change', () => window.I18n.setLang(sel.value));
+    }
   });
 }
 
@@ -129,4 +153,16 @@ window.I18n = {
 
   // apply manually (ใช้หลัง inject navbar)
   applyLang: applyTranslations,
+};
+
+// Safe translate with English fallback for JS-rendered strings when
+// i18next/CDN isn't ready yet. Usage: T("listings.noResults", "No jobs…")
+window.T = (key, fallback) => {
+  try {
+    if (typeof i18next !== 'undefined' && i18next.isInitialized) {
+      const v = i18next.t(key);
+      if (v && v !== key) return v;
+    }
+  } catch (e) { /* fall through */ }
+  return fallback !== undefined ? fallback : key;
 };

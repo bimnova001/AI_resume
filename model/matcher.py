@@ -1,9 +1,11 @@
 """Match a resume against real postings in the DB (stdlib only).
 
-Pipeline (fast, no extra LLM call):
-  1. extract_keywords() — frequent meaningful tokens from the resume,
-  2. candidate pre-filter via SQLite LIKE search per keyword (cheap),
-  3. embedding cosine re-rank of a capped candidate set (accurate),
+Pipeline — cheap filters FIRST, AI (embeddings) LAST on a tiny set:
+  0. User intent: jobs matching the requested job_title / job_type go first.
+  1. extract_keywords() — frequent meaningful tokens from the resume.
+  2. Candidate pre-filter via SQLite LIKE search (cheap, no AI).
+     The candidate set is capped (default 10) so the AI never sees bulk jobs.
+  3. Embedding cosine re-rank of the capped set (accurate).
   4. matched_skills — keyword overlap shown as the human-readable reason.
 
 Returns up to `limit` jobs shaped for the API:
@@ -59,11 +61,23 @@ def matched_skills(resume_keywords, job, max_n=6):
     return [kw for kw in resume_keywords if kw in job_tokens][:max_n]
 
 
-def suggest_jobs(resume_text, limit=3, candidate_cap=15, similarity_fn=None):
+def _take(candidates, seen, jobs, cap):
+    for job in jobs:
+        jid = job.get("id")
+        if jid not in seen and job.get("title"):
+            seen.add(jid)
+            candidates.append(job)
+        if len(candidates) >= cap:
+            break
+
+
+def suggest_jobs(resume_text, limit=3, candidate_cap=10, job_title="",
+                 job_type="", similarity_fn=None):
     """Top-`limit` DB postings for this resume. Never raises.
 
     `similarity_fn(resume, job_text)` injected for tests; defaults to the
     embedding model (imported lazily to keep this module light).
+    Only `candidate_cap` jobs ever reach the embedding model.
     """
     from model import database as db
 
@@ -73,29 +87,40 @@ def suggest_jobs(resume_text, limit=3, candidate_cap=15, similarity_fn=None):
     if not isinstance(resume_text, str) or not resume_text.strip():
         return []
     try:
-        keywords = extract_keywords(resume_text)
-        if not keywords:
-            return []
+        candidates, seen = [], set()
 
-        # 1) cheap pre-filter: union of per-keyword searches
-        seen, candidates = set(), []
-        for kw in keywords[:8]:
+        # 0) What the user asked for: title/type matches first.
+        if isinstance(job_title, str) and job_title.strip():
             try:
-                out = db.list_jobs(q=kw, limit=candidate_cap, offset=0)
+                out = db.list_jobs(q=job_title.strip(), limit=candidate_cap,
+                                   offset=0)
+                _take(candidates, seen, out.get("jobs", []), candidate_cap)
             except Exception:
-                continue
-            for job in out.get("jobs", []):
-                if job.get("id") not in seen and job.get("title"):
-                    seen.add(job["id"])
-                    candidates.append(job)
+                pass
+        if len(candidates) < candidate_cap and isinstance(job_type, str) \
+                and job_type.strip():
+            try:
+                out = db.list_jobs(job_type=job_type.strip(),
+                                   limit=candidate_cap, offset=0)
+                _take(candidates, seen, out.get("jobs", []), candidate_cap)
+            except Exception:
+                pass
+
+        # 1) Cheap pre-filter: union of per-keyword searches.
+        keywords = extract_keywords(resume_text)
+        if keywords:
+            for kw in keywords[:8]:
                 if len(candidates) >= candidate_cap:
                     break
-            if len(candidates) >= candidate_cap:
-                break
+                try:
+                    out = db.list_jobs(q=kw, limit=candidate_cap, offset=0)
+                except Exception:
+                    continue
+                _take(candidates, seen, out.get("jobs", []), candidate_cap)
         if not candidates:
             return []
 
-        # 2) accurate re-rank with embeddings
+        # 2) Accurate re-rank with embeddings (capped set only).
         scored = []
         for job in candidates:
             try:

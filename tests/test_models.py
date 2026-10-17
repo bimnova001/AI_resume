@@ -25,6 +25,16 @@ def test_parse_invalid_returns_none():
     assert parse_llm_json(123) is None
 
 
+def test_parse_strips_markdown_fences():
+    assert parse_llm_json('```json\n{"a": 1}\n```') == {"a": 1}
+    assert parse_llm_json('```\n{"a": 2}\n```') == {"a": 2}
+    assert parse_llm_json('Here:\n```json\n{"a": 3,}\n```') == {"a": 3}
+
+
+def test_parse_truncated_json_returns_none():
+    assert parse_llm_json('{"a": 1, "b": [2,') is None
+
+
 # ---------- rule ----------
 
 def test_rule_empty_text():

@@ -356,6 +356,7 @@
 <body>
     <a href="#main" class="skip-link">Skip to main content</a>
     <div id="navbar-placeholder"></div>
+    <script src="/js/i18n.js"></script>
     <script src="/js/navbar.js"></script>
     <script src="/js/api.js"></script>
 
@@ -378,21 +379,21 @@
             <!-- Filters -->
             <div class="filters-card" role="search" aria-label="Filter jobs">
                 <div class="filter-group">
-                    <label for="searchInput">Search Jobs</label>
-                    <input type="search" id="searchInput" placeholder="Job title, company…" autocomplete="off">
+                    <label for="searchInput" data-i18n="listings.search">Search Jobs</label>
+                    <input type="search" id="searchInput" data-i18n-ph="listings.searchPh" placeholder="Job title, company…" autocomplete="off">
                 </div>
                 <div class="filter-group">
-                    <label for="locationFilter">Location</label>
-                    <input type="search" id="locationFilter" placeholder="e.g. Bangkok, Remote…" autocomplete="off">
+                    <label for="locationFilter" data-i18n="listings.location">Location</label>
+                    <input type="search" id="locationFilter" data-i18n-ph="listings.locationPh" placeholder="e.g. Bangkok, Remote…" autocomplete="off">
                 </div>
                 <div class="filter-group">
-                    <label for="typeFilter">Job Type</label>
-                    <input type="search" id="typeFilter" placeholder="e.g. Full-time, Contract…" autocomplete="off">
+                    <label for="typeFilter" data-i18n="listings.type">Job Type</label>
+                    <input type="search" id="typeFilter" data-i18n-ph="listings.typePh" placeholder="e.g. Full-time, Contract…" autocomplete="off">
                 </div>
                 <div class="filter-group">
-                    <label for="sourceFilter">Source</label>
+                    <label for="sourceFilter" data-i18n="listings.source">Source</label>
                     <select id="sourceFilter">
-                        <option value="">All Sources</option>
+                        <option value="" data-i18n="listings.allSources">All Sources</option>
                         <option value="remotive">Remotive</option>
                         <option value="arbeitnow">Arbeitnow</option>
                         <option value="remoteok">Remote OK</option>
@@ -406,8 +407,8 @@
 
             <!-- Results -->
             <div class="results-header">
-                <p class="results-count"><strong id="resultsCount">–</strong> jobs found</p>
-                <button id="refreshBtn" class="btn-view" type="button">↻ Refresh real postings</button>
+                <p class="results-count"><strong id="resultsCount">–</strong> <span data-i18n="admin.jobs">Jobs</span></p>
+                <button id="refreshBtn" class="btn-view" type="button" data-i18n="common.refresh">↻ Refresh real postings</button>
             </div>
             <p id="jobsStatus" class="results-count" role="status" aria-live="polite"></p>
 
@@ -442,6 +443,7 @@
 
         // NO mock data: every listing below comes from GET /jobs
         // (real postings cached in the backend DB).
+        const T = window.T || ((k, fb) => (fb !== undefined ? fb : k));
         let jobs = [];
         let total = 0;
         let offset = 0;
@@ -472,7 +474,7 @@
             if (loading) return;
             loading = true;
             if (reset) { offset = 0; jobs = []; }
-            status("Loading real job postings…");
+            status(T("listings.statusLoading", "Loading real job postings…"));
             try {
                 const f = filters();
                 const params = new URLSearchParams({
@@ -487,10 +489,10 @@
                 jobs = reset ? page : jobs.concat(page);
                 offset = jobs.length;
                 renderJobs();
-                status(total ? "" : "No postings yet — press “Refresh real postings”.");
+                status(total ? "" : T("listings.statusEmpty", "No postings yet - press Refresh real postings."));
             } catch (e) {
                 console.error(e);
-                status("Could not reach the jobs backend. Check the server and retry.");
+                status(T("common.loadFail", "Could not reach the jobs backend. Check the server and retry."));
                 renderJobs();
             } finally {
                 loading = false;
@@ -505,9 +507,9 @@
                 ? String(st.last_refresh_at).slice(0, 16).replace("T", " ") : "never";
             const counts = Object.entries(st.last_counts || {})
                 .map(([k, c]) => `${k}: ${c}`).join(", ");
-            return `${st.total || 0} jobs in database · last server fetch: ${when}` +
+            return `${st.total || 0} ${T("admin.jobsInDb", "Jobs in DB")} · ${T("admin.lastFetch", "Last server fetch")}: ${when}` +
                 (counts ? ` (${counts})` : "") +
-                (st.refreshing ? " · server is fetching now…" : "");
+                (st.refreshing ? " · " + T("admin.fetchingNow", "Fetching now") + "…" : "");
         }
 
         async function loadStatus() {
@@ -524,7 +526,9 @@
         function setRefreshing(on) {
             const btn = document.getElementById('refreshBtn');
             btn.disabled = !!on;
-            btn.textContent = on ? "Fetching…" : "\u21BB Refresh real postings";
+            btn.textContent = on
+                ? T("common.fetching", "Fetching…")
+                : "\u21BB " + T("common.refresh", "Refresh real postings");
             if (on && !pollTimer) {
                 pollTimer = setInterval(async () => {
                     const st = await loadStatus();
@@ -542,7 +546,7 @@
             const st0 = await loadStatus();
             if (st0 && st0.refreshing) { setRefreshing(true); return; }
             setRefreshing(true);
-            if (!auto) status("Asking the server for fresh postings…");
+            if (!auto) status(T("listings.statusLoading", "Loading real job postings…"));
             try {
                 const r = await F("/jobs/refresh", {
                     method: "POST",
@@ -557,7 +561,7 @@
             } catch (e) {
                 console.error(e);
                 setRefreshing(false);
-                status("Refresh request failed (backend down?). Showing stored postings.");
+                status(T("common.loadFail", "Could not reach the jobs backend. Check the server and retry."));
             }
             loadJobs(true);
         }
@@ -591,13 +595,13 @@
                             <path d="M33 33l9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             <path d="M16 22h12M22 16v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
-                        <p>No real postings found. Adjust filters or press “Refresh real postings”.</p>
+                        <p>${T("listings.noResults", "No real postings found.")} ${T("listings.noResultsSub", "Adjust filters or press Refresh real postings.")}</p>
                     </div>`;
                 return;
             }
 
             const more = (list ? false : jobs.length < total)
-                ? `<div style="text-align:center;margin-top:16px"><button id="moreBtn" class="btn-view" type="button">Load more (${total - jobs.length} left)</button></div>`
+                ? `<div style="text-align:center;margin-top:16px"><button id="moreBtn" class="btn-view" type="button">${T("listings.loadMore", "Load more")} (${total - jobs.length})</button></div>`
                 : "";
 
             container.innerHTML = show.map((job, i) => {
@@ -606,7 +610,7 @@
                 const abbr = escapeHtml(((job.company || "?").trim().charAt(0) || "?").toUpperCase());
                 const meta = [job.source, fmtDate(job.posted_at)].filter(Boolean).join(" · ");
                 const apply = job.url
-                    ? `<a href="${escapeHtml(job.url)}" target="_blank" rel="noopener" class="btn-view" aria-label="Apply for ${escapeHtml(job.title)} (external)">Apply ↗</a>`
+                    ? `<a href="${escapeHtml(job.url)}" target="_blank" rel="noopener" class="btn-view" aria-label="Apply for ${escapeHtml(job.title)} (external)">${T("common.apply", "Apply")} ↗</a>`
                     : "";
                 return `
                 <article class="job-card-list" role="listitem" aria-label="${escapeHtml(job.title)} at ${escapeHtml(job.company)}">
@@ -637,7 +641,7 @@
                         <span class="job-salary">${escapeHtml(job.salary || "")}</span>
                         <span class="posted-chip">${escapeHtml(meta)}</span>
                         <a href="/pages/job-details.html?id=${safeId}" class="btn-view">
-                            View role
+                            ${T("common.viewRole", "View role")}
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                                 <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
@@ -647,7 +651,7 @@
                             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
                                 <path d="M4 2h8a1 1 0 011 1v10l-5-3-5 3V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
                             </svg>
-                            Save
+                            ${T("common.save", "Save")}
                         </button>
                     </div>
                 </article>`;
@@ -679,7 +683,7 @@
                         method: "POST",
                         headers: { "Authorization": `Bearer ${user.token}` },
                     });
-                    if (r.ok) { alert(`Job saved!`); return; }
+                    if (r.ok) { alert(T("common.saved", "Job saved!")); return; }
                 }
             } catch (e) { /* fall back to local */ }
             try {
@@ -688,7 +692,7 @@
                     saved.push(key);
                     localStorage.setItem('savedJobs', JSON.stringify(saved));
                 }
-                alert(`Job saved!`);
+                alert(T("common.saved", "Job saved!"));
             } catch(e) {}
         }
 

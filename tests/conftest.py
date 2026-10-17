@@ -6,6 +6,11 @@ _tmpdir = tempfile.mkdtemp(prefix="ai_resume_tests_")
 os.environ["DB_PATH"] = os.path.join(_tmpdir, "test.db")
 os.environ["JOBS_AUTO_SEED"] = "0"
 os.environ["JOBS_AUTO_REFRESH"] = "0"
+# Hermetic LLM config: the dev machine's .env may point at a real provider
+# (loaded via load_dotenv on `import app`). Tests must never touch it.
+os.environ["LLM_PROVIDER"] = "local"
+os.environ.pop("GOOGLE_API_KEY", None)
+os.environ.pop("GEMINI_MODEL", None)
 
 import pytest  # noqa: E402
 

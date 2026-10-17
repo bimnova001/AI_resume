@@ -183,11 +183,8 @@
       <h2 data-i18n="profile.settings">Account Settings</h2>
       <div class="form-group">
         <label for="language" data-i18n="profile.language">Preferred Language</label>
-        <!-- lang-select class lets i18n.js sync this automatically -->
-        <select id="language" class="lang-select">
-          <option value="en">English</option>
-          <option value="th">ไทย</option>
-        </select>
+        <!-- lang-select class lets i18n.js inject + sync the 10 languages -->
+        <select id="language" class="lang-select" aria-label="Language"></select>
       </div>
       <button type="button" class="btn-outline" id="changePasswordBtn">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -241,14 +238,18 @@
         // Visual feedback — swap button text briefly
         const span = document.querySelector('#saveBtn [data-i18n="profile.save"]');
         const orig = span.textContent;
-        span.textContent = I18n.t('profile.saved');
+        span.textContent = (window.T ? T('profile.saved', 'Saved!') : 'Saved!');
         setTimeout(() => span.textContent = orig, 2000);
       });
 
-      /* ── Language switcher ── */
+      /* ── Language switcher ──
+         i18n.js already binds .lang-select → I18n.setLang() when available;
+         here we only persist the choice into the user object (and fall back to
+         switching manually if i18next never loaded). */
       document.getElementById('language').addEventListener('change', function () {
-        I18n.setLang(this.value);
-
+        if (!(window.I18n && typeof I18n.setLang === 'function')) {
+          return; // i18n.js not loaded — nothing to apply
+        }
         // Persist lang preference into user object too
         try {
           const u = JSON.parse(localStorage.getItem('user') || '{}');
@@ -258,6 +259,18 @@
       });
 
       loadUser();
+
+      /* keep the persisted user.lang in sync with the current i18next language */
+      document.addEventListener('i18n:ready', function () {
+        try {
+          const u = JSON.parse(localStorage.getItem('user') || '{}');
+          const cur = (typeof I18n !== 'undefined' && I18n.getLang) ? I18n.getLang() : null;
+          if (cur && u.lang !== cur) {
+            u.lang = cur;
+            localStorage.setItem('user', JSON.stringify(u));
+          }
+        } catch(e) {}
+      });
     });
   </script>
 </body>

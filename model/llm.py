@@ -12,6 +12,11 @@ Anti-hallucination design:
 
 The model binary (~4.7 GB) downloads on first use into ./model_cache.
 16 GB RAM recommended. Nothing loads at import time (lazy).
+
+Providers (env LLM_PROVIDER, default "local"):
+  - local  — Qwen GGUF via llama-cpp, offline, free.
+  - google — Gemini API (needs GOOGLE_API_KEY + optional GEMINI_MODEL),
+             same JSON contract, picked per call.
 """
 import json
 import os
@@ -23,8 +28,8 @@ from model.jsonutil import parse_llm_json
 # Configure via env: LLM_REPO, LLM_FILE, LLM_CTX, LLM_THREADS
 _llm = None
 
-DEFAULT_REPO = "Qwen/Qwen2.5-7B-Instruct-GGUF"
-DEFAULT_FILE = "qwen2.5-7b-instruct-q4_k_m.gguf"
+DEFAULT_REPO = "bartowski/Qwen2.5-7B-Instruct-GGUF"
+DEFAULT_FILE = "Qwen2.5-7B-Instruct-Q4_K_M.gguf"
 
 MAX_RESUME_CHARS = 5000
 
@@ -57,8 +62,41 @@ class _LazyLlama:
 llm = _LazyLlama()
 
 
+def _provider():
+    return os.getenv("LLM_PROVIDER", "local").strip().lower()
+
+
+def _local_model_cached():
+    """True only when the CONFIGURED file is already on disk.
+
+    (An unrelated *.gguf must not trigger a 5 GB surprise — that was the
+    old bug: any gguf counted, then from_pretrained failed on the name.)
+    """
+    try:
+        from huggingface_hub import try_to_load_from_cache
+        repo_id = os.getenv("LLM_REPO", DEFAULT_REPO)
+        filename = os.getenv("LLM_FILE", DEFAULT_FILE)
+        hit = try_to_load_from_cache(repo_id=repo_id, filename=filename,
+                                     cache_dir="./model_cache")
+        return hit is not None and not str(hit).endswith(".incomplete")
+    except Exception:
+        return False
+
+
 def _chat_json(messages, max_tokens):
     """One chat call in JSON mode. Returns the raw text (str)."""
+    if _provider() in ("google", "gemini"):
+        from model.google_llm import generate_json
+        system = next((m["content"] for m in messages if m.get("role") == "system"), "")
+        user = "\n\n".join(m["content"] for m in messages if m.get("role") != "system")
+        try:
+            return generate_json(system, user, max_tokens)
+        except RuntimeError as e:
+            if _local_model_cached():
+                from logger import logger as _logger
+                _logger.warning(f"Gemini failed, falling back to local model: {e}")
+            else:
+                raise
     result = get_llm().create_chat_completion(
         messages=messages,
         response_format={"type": "json_object"},
@@ -69,16 +107,18 @@ def _chat_json(messages, max_tokens):
     return result["choices"][0]["message"]["content"]
 
 
-def _chat_json_with_repair(messages, max_tokens):
+def _chat_json_with_repair(messages, max_tokens, schema=None):
     """Chat call + one repair retry. Always returns a string."""
     text = _chat_json(messages, max_tokens)
     if parse_llm_json(text) is not None:
         return text
+    hint = f"\nRequired schema:\n{schema}" if schema else ""
     repair = messages + [
         {"role": "user",
          "content": ("Your previous reply was NOT valid JSON or broke the schema. "
                      "Reply again with ONLY the corrected JSON object — no prose, "
-                     "no markdown, no code fences. Previous reply:\n" + text[:2000])},
+                     "no markdown, no code fences." + hint +
+                     " Previous reply:\n" + text[:2000])},
     ]
     fixed = _chat_json(repair, max_tokens)
     return fixed if parse_llm_json(fixed) is not None else text
@@ -147,7 +187,8 @@ Write the JSON analysis now."""
     return _chat_json_with_repair(
         [{"role": "system", "content": system},
          {"role": "user", "content": user}],
-        max_tokens=1500,
+        max_tokens=2500,
+        schema=ANALYZE_SCHEMA,
     )
 
 
@@ -185,4 +226,5 @@ Write the JSON summary now."""
         [{"role": "system", "content": system},
          {"role": "user", "content": user}],
         max_tokens=1500,
+        schema=MARKET_SCHEMA,
     )

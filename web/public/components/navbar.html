@@ -14,12 +14,14 @@
         </a>
 
         <ul class="nav-menu" role="list">
-            <li><a href="/">Home</a></li>
-            <li><a href="/pages/job-listings.html">Jobs</a></li>
-            <li><a href="/pages/resume.html">Resume Analyze</a></li>
-            <li><a href="/pages/insights.html">Insights Analysis</a></li>
-            <li><a href="/pages/admin.html">Service</a></li>
+            <li><a href="/" data-i18n="nav.home">Home</a></li>
+            <li><a href="/pages/job-listings.html" data-i18n="nav.jobs">Jobs</a></li>
+            <li><a href="/pages/resume.html" data-i18n="nav.resume">Resume Analyze</a></li>
+            <li><a href="/pages/insights.html" data-i18n="nav.insights">Insights Analysis</a></li>
+            <li><a href="/pages/admin.html" data-i18n="nav.service">Service</a></li>
         </ul>
+
+        <select class="lang-select" id="navbarLang" aria-label="Language"></select>
 
         <div class="nav-user">
             <button id="userBtn"
@@ -33,7 +35,7 @@
             <div id="userMenu" class="user-dropdown hidden" role="menu" aria-label="User menu">
 
                 <div class="dropdown-header">
-                    Signed in as
+                    <span data-i18n="nav.signedIn">Signed in as</span>
                     <strong id="userName">User</strong>
                 </div>
 
@@ -42,14 +44,14 @@
                         <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
                         <path d="M3 13c0-2.21 2.239-4 5-4s5 1.79 5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                     </svg>
-                    Profile
+                    <span data-i18n="nav.profile">Profile</span>
                 </a>
 
                 <a href="/pages/saved-jobs.html" class="dropdown-item" role="menuitem">
                     <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
                         <path d="M4 2h8a1 1 0 011 1v10l-5-3-5 3V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
                     </svg>
-                    Saved Jobs
+                    <span data-i18n="nav.savedJobs">Saved Jobs</span>
                 </a>
 
                 <div class="dropdown-divider" role="separator"></div>
@@ -58,7 +60,7 @@
                     <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
                         <path d="M10 11l3-3-3-3M13 8H6M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Log out
+                    <span data-i18n="nav.logout">Log out</span>
                 </button>
 
             </div>
@@ -169,6 +171,50 @@ nav {
 .nav-menu a:focus-visible {
     outline: 2px solid rgba(255,255,255,.8);
     outline-offset: 2px;
+}
+
+/* Language picker: white chip + dark text so it reads on the purple bar.
+   <option> needs its own colors — browsers render the native dropdown with
+   page colors, so without this the list is white-on-white (invisible). */
+.lang-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #ffffff;
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 8px 30px 8px 12px;
+    font-family: var(--font);
+    font-size: .85rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='%234338ca' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.lang-select:hover { border-color: var(--primary); }
+.lang-select:focus-visible {
+    outline: 3px solid rgba(255,255,255,.85);
+    outline-offset: 2px;
+}
+
+.lang-select option {
+    background-color: #ffffff;
+    background-image: none;
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: .9rem;
+    font-weight: 500;
+}
+
+.lang-select option:checked {
+    background-color: var(--primary-light);
+    color: var(--primary-hover);
+    font-weight: 700;
 }
 
 .nav-user {

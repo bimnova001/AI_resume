@@ -64,6 +64,21 @@ body {
     width: 100%;
 }
 
+/* Native dropdown items need explicit colors, else Chrome/Edge render them
+   with the select's text color and they become invisible in the open list. */
+.lang-select option {
+    background-color: #ffffff;
+    color: #0f172a;
+    font-family: inherit;
+    font-weight: 500;
+}
+
+.lang-select option:checked {
+    background-color: #eef2ff;
+    color: #3730a3;
+    font-weight: 700;
+}
+
 .form-card {
     display: grid;
     gap: 20px;

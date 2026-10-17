@@ -2,56 +2,15 @@ const btn = document.getElementById("analyzeBtn");
 const resultDiv = document.getElementById("result");
 const langSelect = document.getElementById("langSelect");
 
-const translations = {
-    en: {
-        title: "AI Resume Analyzer",
-        subtitle: "Upload your resume, choose the job type, and receive clear feedback for job fit, strengths, weaknesses, and improvement suggestions.",
-        resume: "Resume PDF",
-        jobTitle: "Job Title",
-        jobTitlePlaceholder: "AI Engineer",
-        jobType: "Job Type",
-        jobTypePlaceholder: "Select job type (optional)",
-        newGrad: "I am a new graduate",
-        analyze: "Analyze Resume",
-        uploadAlert: "Please upload a resume.",
-        error: "Something went wrong while analyzing your resume.",
-        noSummary: "No summary available.",
-        analyzing: "Analyzing...",
-        errorTitle: "Error"
-    },
-    th: {
-        title: "วิเคราะห์เรซูเม่ด้วย AI",
-        subtitle: "อัปโหลดเรซูเม่ เลือกประเภทงาน แล้วรับคำแนะนำชัดเจนสำหรับการสมัครงานและจุดปรับปรุง",
-        resume: "ไฟล์เรซูเม่ PDF",
-        jobTitle: "ชื่อตำแหน่งงาน",
-        jobTitlePlaceholder: "AI Engineer",
-        jobType: "ประเภทงาน",
-        jobTypePlaceholder: "เลือกประเภทงาน (ไม่บังคับ)",
-        newGrad: "ฉันเป็นบัณฑิตจบใหม่",
-        analyze: "วิเคราะห์เรซูเม่",
-        uploadAlert: "กรุณาอัปโหลดเรซูเม่",
-        error: "เกิดข้อผิดพลาดขณะวิเคราะห์เรซูเม่ของคุณ",
-        noSummary: "ไม่มีสรุปผลให้แสดง",
-        analyzing: "กำลังวิเคราะห์...",
-        errorTitle: "ข้อผิดพลาด"
-    }
-};
+// UI strings come from i18next (/locales, 10 languages) via window.T().
+// Static labels are handled by data-i18n attributes; dynamic strings below
+// use T(key, englishFallback) so the page works even if i18next/CDN fails.
+const T = window.T || ((key, fallback) => (fallback !== undefined ? fallback : key));
 
-function translateUI(lang) {
-    const t = translations[lang] || translations.en;
-    document.querySelector(".hero h1").textContent = t.title;
-    document.querySelector(".hero-text").textContent = t.subtitle;
-    document.querySelector("label[for='resume']").textContent = t.resume;
-    document.querySelector("label[for='jobTitle']").textContent = t.jobTitle;
-    document.getElementById("jobTitle").placeholder = t.jobTitlePlaceholder;
-    document.querySelector("label[for='jobType']").textContent = t.jobType;
-    document.querySelector("#jobType option[value='']").textContent = t.jobTypePlaceholder;
-    document.querySelector("label[for='isNewGrad']").textContent = t.newGrad;
-    document.getElementById("analyzeBtn").textContent = t.analyze;
-}
-
-langSelect.addEventListener("change", () => translateUI(langSelect.value));
-translateUI(langSelect.value);
+// Machine-translation target per UI language (googletrans codes).
+const MT_DEST = { zh: "zh-cn" };
+function mtDest(lang) { return MT_DEST[lang] || lang || "en"; }
+function currentLang() { return (langSelect && langSelect.value) || "en"; }
 
 // Shared helpers live in /js/json-util.js (single source of truth).
 // Fall back to local copies if the script failed to load.
@@ -110,21 +69,8 @@ const tryParseJson = window.tryParseJson || function (text) {
     }
 };
 
-const thaiTranslations = {
-    "resume_score": "คะแนนเรซูเม่",
-    "match_comment": "ความเหมาะสมกับตำแหน่ง",
-    "summary": "สรุป",
-    "strengths": "จุดแข็ง",
-    "weaknesses": "จุดอ่อน",
-    "missing_skills": "ทักษะที่ขาด",
-    "recommended_projects": "โครงการที่แนะนำ",
-    "recommended_certificates": "ใบรับรองที่แนะนำ",
-    "career_paths": "เส้นทางอาชีพ",
-    "recommended_actions": "ข้อแนะนำเพิ่มเติม",
-};
-
 async function translateText(text, lang) {
-    if (lang !== "th" || !text) return text;
+    if (!text || lang === "en") return text;
     if (typeof text !== "string") return text;
 
     try {
@@ -133,7 +79,7 @@ async function translateText(text, lang) {
         
         const response = await fetch("/translate", {
             method: "POST",
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text, target_lang: mtDest(lang) }),
             headers: {
                 "Content-Type": "application/json"
             },
@@ -156,7 +102,7 @@ async function translateText(text, lang) {
 }
 
 async function translateAnalysisObject(analysis, lang) {
-    if (lang !== "th" || typeof analysis !== "object" || !analysis) return analysis;
+    if (lang === "en" || typeof analysis !== "object" || !analysis) return analysis;
 
     // Batch: fire ALL string translations concurrently (one Promise.all),
     // instead of awaiting key-by-key which serializes latency (N x RTT).
@@ -236,25 +182,24 @@ async function renderAnalysis(data, lang) {
         ? data.analysis
         : tryParseJson(data.analysis);
 
-    // Translate analysis content based on language selection
-    if (lang === "th") {
-        console.log("Translating analysis to Thai via LibreTranslate...", analysis);
+    // Translate analysis content to the selected language (en = source).
+    if (lang !== "en") {
         analysis = await translateAnalysisObject(analysis, lang);
-        console.log("Translated analysis:", analysis);
     }
 
-    const t = translations[lang] || translations.en;
-    const heading = lang === "th" ? "ผลการวิเคราะห์" : "Resume Analysis";
-    const summaryLabel = lang === "th" ? "สรุป" : "Summary";
-    const strengthsLabel = lang === "th" ? "จุดแข็ง" : "Strengths";
-    const weaknessesLabel = lang === "th" ? "จุดอ่อน" : "Weaknesses";
-    const missingSkillsLabel = lang === "th" ? "ทักษะที่ขาด" : "Missing Skills";
-    const projectsLabel = lang === "th" ? "โครงการที่แนะนำ" : "Recommended Projects";
-    const certificatesLabel = lang === "th" ? "ใบรับรองที่แนะนำ" : "Recommended Certificates";
-    const careersLabel = lang === "th" ? "เส้นทางอาชีพ" : "Career Paths";
-    const actionsLabel = lang === "th" ? "ข้อแนะนำเพิ่มเติม" : "Recommended Actions";
-    const jobFitLabel = lang === "th" ? "ความเหมาะสม" : "Job Fit";
-    const matchLabel = lang === "th" ? "ตรงกับงาน" : "Match %";
+    const heading = T("resume.heading", "Resume Analysis");
+    const summaryLabel = T("resume.summary", "Summary");
+    const strengthsLabel = T("resume.strengths", "Strengths");
+    const weaknessesLabel = T("resume.weaknesses", "Weaknesses");
+    const missingSkillsLabel = T("resume.missingSkills", "Missing Skills");
+    const projectsLabel = T("resume.projects", "Recommended Projects");
+    const certificatesLabel = T("resume.certificates", "Recommended Certificates");
+    const careersLabel = T("resume.careers", "Career Paths");
+    const actionsLabel = T("resume.actions", "Recommended Actions");
+    const jobFitLabel = T("resume.jobFit", "Job Fit");
+    const noSummary = T("resume.noSummary", "No summary available.");
+    const noComment = T("resume.noComment", "No comment");
+    const yesNo = v => v ? T("resume.yes", "Yes") : T("resume.no", "No");
 
     // If analysis couldn't be parsed, still show minimal UI
     const resumeScore = analysis?.resume_score ?? null;
@@ -276,31 +221,35 @@ async function renderAnalysis(data, lang) {
                     <div class="progress-outer">
                         <div class="progress-inner" style="width: ${matchPctNumber}%"></div>
                     </div>
-                    <div style="margin-top:10px;color:#475569">${escapeHtml(jobFitLabel)}: ${escapeHtml(analysis?.match_comment ?? (lang === 'th' ? 'ไม่มีความคิดเห็น' : 'No comment'))}</div>
+                    <div style="margin-top:10px;color:#475569">${escapeHtml(jobFitLabel)}: ${escapeHtml(analysis?.match_comment ?? noComment)}</div>
                 </div>
             </div>
             <div class="result-grid" style="margin-top:16px">
                 <div class="stat">
-                    <h3>${lang === "th" ? "คะแนนเรซูเม่" : "Resume Score"}</h3>
+                    <h3>${escapeHtml(T("resume.resumeScore", "Resume Score"))}</h3>
                     <p>${scoreDisplay}</p>
                 </div>
                 <div class="stat">
-                    <h3>${lang === "th" ? "ตำแหน่งที่สมัคร" : "Applied Role"}</h3>
+                    <h3>${escapeHtml(T("resume.appliedRole", "Applied Role"))}</h3>
                     <p>${escapeHtml(data.job_title ?? '-')}</p>
                 </div>
                 <div class="stat">
-                    <h3>${lang === "th" ? "เป็นบัณฑิตจบใหม่" : "New Graduate"}</h3>
-                    <p>${data.is_new_grad === 'true' || data.is_new_grad === true ? (lang === 'th' ? 'ใช่' : 'Yes') : (lang === 'th' ? 'ไม่' : 'No')}</p>
+                    <h3>${escapeHtml(T("resume.isNewGrad", "New Graduate"))}</h3>
+                    <p>${escapeHtml(yesNo(data.is_new_grad === 'true' || data.is_new_grad === true))}</p>
                 </div>
             </div>
         </div>
     `;
 
-    // Summary
+    // Summary (if the AI reply wasn't structured JSON, show the raw text
+    // instead of empty cards so nothing silently disappears)
+    const rawFallback = (!analysis && typeof data.analysis === "string" && data.analysis.trim())
+        ? data.analysis.trim() : null;
+    const note = T("resume.rawNote", " (AI reply was not structured JSON — showing raw text, see backend log)");
     out += `
         <div class="result-section">
             <h3>${escapeHtml(summaryLabel)}</h3>
-            <p>${escapeHtml(analysis?.summary ?? t.noSummary)}</p>
+            <p>${escapeHtml(analysis?.summary ?? rawFallback ?? noSummary)}${rawFallback ? `<br><span class="muted">${escapeHtml(note)}</span>` : ""}</p>
         </div>
     `;
 
@@ -328,21 +277,21 @@ async function renderAnalysis(data, lang) {
 }
 
 function renderSuggestedJobs(jobs, lang) {
-    const title = lang === "th" ? "งานที่ AI แนะนำสำหรับคุณ" : "Jobs picked for you";
-    const sub = lang === "th"
-        ? "เลือกจากประกาศงานจริงโดยเทียบเนื้อหาเรซูเม่ของคุณ"
-        : "Picked from real postings by matching your resume content";
+    const title = T("resume.pickedTitle", "Jobs picked for you");
+    const sub = T("resume.pickedSub", "Picked from real postings by matching your resume content");
+    const viewRole = T("common.viewRole", "View role");
+    const applyLbl = T("common.apply", "Apply");
     if (!Array.isArray(jobs) || jobs.length === 0) {
         return `<div class="result-section" style="margin-top:8px"><h3>${escapeHtml(title)}</h3>` +
-            `<p class="muted">${escapeHtml(lang === "th" ? "ยังไม่มีงานที่ตรง — ลองดึงประกาศงานจริงก่อน" : "No matches yet — refresh the real postings first")}</p></div>`;
+            `<p class="muted">${escapeHtml(T("resume.pickedEmpty", "No matches yet — refresh the real postings first"))}</p></div>`;
     }
     const cards = jobs.map(j => {
         const pct = (j.match !== null && j.match !== undefined && j.match !== "") ? Number(j.match).toFixed(1) + "%" : "—";
         const skills = Array.isArray(j.matched_skills) && j.matched_skills.length
             ? `<div class="chip-list" style="margin-top:8px">${j.matched_skills.map(s => `<span class="chip">${escapeHtml(s)}</span>`).join("")}</div>` : "";
         const links = `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">` +
-            `<a href="/pages/job-details.html?id=${encodeURIComponent(j.id)}" class="card-link">View role</a>` +
-            (j.url ? `<a href="${escapeHtml(j.url)}" target="_blank" rel="noopener" class="card-link">Apply ↗</a>` : "") + `</div>`;
+            `<a href="/pages/job-details.html?id=${encodeURIComponent(j.id)}" class="card-link">${escapeHtml(viewRole)}</a>` +
+            (j.url ? `<a href="${escapeHtml(j.url)}" target="_blank" rel="noopener" class="card-link">${escapeHtml(applyLbl)} ↗</a>` : "") + `</div>`;
         return `<div class="result-section list-card">` +
             `<h3>${escapeHtml(j.title || "—")} <span class="chip">${escapeHtml(pct)}</span></h3>` +
             `<p class="muted">${escapeHtml([j.company, j.location].filter(Boolean).join(" · "))}</p>` +
@@ -357,13 +306,13 @@ btn.addEventListener("click", analyzeResume);
 
 async function analyzeResume() {
     const file = document.getElementById("resume").files[0];
-    const lang = langSelect.value || "en";
+    const lang = currentLang();
     const jobTitle = document.getElementById("jobTitle").value;
     const jobType = document.getElementById("jobType").value;
     const isNewGrad = document.getElementById("isNewGrad").checked;
 
     if (!file) {
-        alert(translations[lang].uploadAlert);
+        alert(T("resume.uploadAlert", "Please upload a resume."));
         return;
     }
 
@@ -374,14 +323,7 @@ async function analyzeResume() {
     formData.append("is_new_grad", isNewGrad ? "true" : "false");
     formData.append("language", lang);
 
-    console.log("Sending analyze request", {
-        job_title: jobTitle,
-        job_type: jobType,
-        is_new_grad: isNewGrad,
-        language: lang,
-    });
-
-    resultDiv.innerHTML = `<div class="result-card"><p>${translations[lang].analyzing}</p></div>`;
+    resultDiv.innerHTML = `<div class="result-card"><p>${escapeHtml(T("resume.analyzing", "Analyzing…"))}</p></div>`;
 
     try {
         const headers = {};
@@ -392,16 +334,9 @@ async function analyzeResume() {
         const response = await fetch("/analyze", { method: "POST", body: formData, headers });
         const data = await response.json();
 
-        console.group("Resume Analysis Debug");
-        console.log("Raw response data:", data);
-        console.log("analysis field type:", typeof data.analysis, data.analysis);
-        const parsedAnalysis = typeof data.analysis === "object" ? data.analysis : tryParseJson(data.analysis);
-        console.log("Parsed analysis:", parsedAnalysis);
-        console.groupEnd();
-
         resultDiv.innerHTML = await renderAnalysis(data, lang);
     } catch (err) {
         console.error(err);
-        resultDiv.innerHTML = `<div class="result-card"><h2>${translations[lang].errorTitle}</h2><p>${translations[lang].error}</p></div>`;
+        resultDiv.innerHTML = `<div class="result-card"><h2>${escapeHtml(T("resume.errorTitle", "Error"))}</h2><p>${escapeHtml(T("resume.error", "Something went wrong while analyzing your resume."))}</p></div>`;
     }
 }

@@ -407,6 +407,7 @@
 </head>
 <body>
     <div id="navbar-placeholder"></div>
+<script src="/js/i18n.js"></script>
     <script src="/js/navbar.js"></script>
     <div class="container">
         <a href="/pages/job-listings.html" class="back-link">
@@ -424,7 +425,7 @@
                         <i class="fas fa-map-marker-alt"></i>
                     </div>
                     <div class="meta-text">
-                        <h4>Location</h4>
+                        <h4 data-i18n="details.location">Location</h4>
                         <p id="jobLocation">—</p>
                     </div>
                 </div>
@@ -434,7 +435,7 @@
                         <i class="fas fa-briefcase"></i>
                     </div>
                     <div class="meta-text">
-                        <h4>Job Type</h4>
+                        <h4 data-i18n="details.jobType">Job Type</h4>
                         <p id="jobType">—</p>
                     </div>
                 </div>
@@ -444,7 +445,7 @@
                         <i class="fas fa-hourglass-start"></i>
                     </div>
                     <div class="meta-text">
-                        <h4>Posted</h4>
+                        <h4 data-i18n="details.posted">Posted</h4>
                         <p id="jobPosted">—</p>
                     </div>
                 </div>
@@ -454,7 +455,7 @@
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="meta-text">
-                        <h4>Source</h4>
+                        <h4 data-i18n="details.source">Source</h4>
                         <p id="jobApplicants">—</p>
                     </div>
                 </div>
@@ -462,10 +463,10 @@
 
             <div class="job-actions">
                 <a class="btn btn-primary" id="applyBtn" href="#" target="_blank" rel="noopener" style="display:none">
-                    <i class="fas fa-paper-plane"></i> Apply on original posting
+                    <i class="fas fa-paper-plane"></i> <span data-i18n="details.applyOriginal">Apply on original posting</span>
                 </a>
                 <button class="btn btn-secondary" id="saveBtn">
-                    <i class="fas fa-bookmark"></i> Save Job
+                    <i class="fas fa-bookmark"></i> <span data-i18n="common.save">Save</span>
                 </button>
                 <button class="btn btn-secondary">
                     <i class="fas fa-share-alt"></i> Share
@@ -480,7 +481,7 @@
                 <!-- Job Description -->
                 <div class="section" data-aos="fade-up">
                     <h2 class="section-title">
-                        <i class="fas fa-file-alt"></i> Job Description
+                        <i class="fas fa-file-alt"></i> <span data-i18n="details.description">Job Description</span>
                     </h2>
                     <p class="description-text" id="jobDescription">Loading…</p>
                 </div>
@@ -488,26 +489,26 @@
                 <!-- Posting info (source + dates come from the real feed) -->
                 <div class="section" data-aos="fade-up" data-aos-delay="100">
                     <h2 class="section-title">
-                        <i class="fas fa-link"></i> Posting Info
+                        <i class="fas fa-link"></i> <span data-i18n="details.postingInfo">Posting Info</span>
                     </h2>
                     <div class="list-item">
                         <i class="fas fa-database"></i>
-                        <div>Source: <span id="jobSource">—</span></div>
+                        <div><span data-i18n="details.source">Source</span>: <span id="jobSource">—</span></div>
                     </div>
                     <div class="list-item">
                         <i class="fas fa-calendar"></i>
-                        <div>Posted: <span id="jobPostedDate">—</span></div>
+                        <div><span data-i18n="details.postedOn">Posted</span>: <span id="jobPostedDate">—</span></div>
                     </div>
                     <div class="list-item">
                         <i class="fas fa-external-link-alt"></i>
-                        <div><a id="jobOriginalLink" href="#" target="_blank" rel="noopener">Open original posting</a></div>
+                        <div><a id="jobOriginalLink" href="#" target="_blank" rel="noopener" data-i18n="details.openOriginal">Open original posting</a></div>
                     </div>
                 </div>
 
                 <!-- Skills -->
                 <div class="section" data-aos="fade-up" data-aos-delay="300">
                     <h2 class="section-title">
-                        <i class="fas fa-code"></i> Tags
+                        <i class="fas fa-code"></i> <span data-i18n="details.tags">Tags</span>
                     </h2>
                     <div class="skill-tags" id="jobTags"></div>
                 </div>
@@ -518,7 +519,7 @@
                 <!-- Salary -->
                 <div class="sidebar-section" data-aos="fade-left">
                     <div class="salary-badge">
-                        <div class="salary-label">Salary</div>
+                        <div class="salary-label" data-i18n="details.salary">Salary</div>
                         <div class="salary-value" id="jobSalary">—</div>
                     </div>
                 </div>
@@ -526,12 +527,12 @@
                 <!-- Company Info -->
                 <div class="sidebar-section" data-aos="fade-left" data-aos-delay="100">
                     <h3 class="sidebar-title">
-                        <i class="fas fa-building"></i> Company
+                        <i class="fas fa-building"></i> <span data-i18n="details.company">Company</span>
                     </h3>
                     <div class="company-info">
                         <div class="company-name" id="jobCompanySide">—</div>
                     </div>
-                    <p style="margin-top: 12px; color: #666; font-size: 0.9rem;" id="jobSourceNote">
+                    <p style="margin-top: 12px; color: #666; font-size: 0.9rem;" id="jobSourceNote" data-i18n="details.companyNote">
                         Company details come from the original posting.
                     </p>
                 </div>
@@ -574,13 +575,13 @@
         // script can never die before loadJobDetails() runs.
 
         // Load job details from the real backend DB (no mock data).
+        const T = window.T || ((k, fb) => (fb !== undefined ? fb : k));
         async function loadJobDetails() {
             const params = new URLSearchParams(window.location.search);
             const jobId = params.get('id');
             if (!jobId) {
-                document.getElementById('jobTitle').textContent = "Job not specified";
-                document.getElementById('jobDescription').textContent =
-                    "Open this page from the Jobs list so a real posting id is provided.";
+                document.getElementById('jobTitle').textContent = T("details.noId", "Job not specified");
+                document.getElementById('jobDescription').textContent = T("details.noIdSub", "Open this page from the Jobs list so a real posting id is provided.");
                 return;
             }
             let job = null;
@@ -589,9 +590,8 @@
                 if (r.ok) job = await r.json();
             } catch (e) { console.error(e); }
             if (!job || !job.title) {
-                document.getElementById('jobTitle').textContent = "Job not found";
-                document.getElementById('jobDescription').textContent =
-                    "This posting is not in the database. Browse Jobs and refresh the real postings.";
+                document.getElementById('jobTitle').textContent = T("details.notFound", "Job not found");
+                document.getElementById('jobDescription').textContent = T("details.notFoundSub", "This posting is not in the database. Browse Jobs and refresh the real postings.");
                 return;
             }
 
@@ -610,7 +610,7 @@
             document.getElementById('jobSourceNote').textContent =
                 `Fetched from ${job.source || "partner feed"} · saved ${String(job.fetched_at || "").slice(0, 10)}`;
             document.getElementById('jobDescription').textContent =
-                job.description || "No description provided by the source.";
+                job.description || T("common.noDescription", "No description provided by the source.");
             document.getElementById('jobTags').innerHTML =
                 (job.tags || []).map(t => `<span class="skill-tag">${escapeHtml(t)}</span>`).join("");
 
@@ -618,23 +618,23 @@
             const applyBtn = document.getElementById('applyBtn');
             if (job.url) {
                 link.href = job.url;
-                link.textContent = "Open original posting ↗";
+                link.textContent = T("details.openOriginal", "Open original posting") + " ↗";
                 applyBtn.href = job.url;
                 applyBtn.style.display = "";
             } else {
-                link.textContent = "No external link provided";
+                link.textContent = T("details.noLink", "No external link provided");
             }
 
             document.getElementById('saveBtn').addEventListener('click', async () => {
                 try {
                     const user = JSON.parse(localStorage.getItem('user') || '{}');
-                    if (!user.token) { alert("Log in to save jobs to your account."); return; }
+                    if (!user.token) { alert(T("details.saveLogin", "Log in to save jobs to your account.")); return; }
                     const r = await fetch(Api.url(`/jobs/${encodeURIComponent(job.id)}/save`), {
                         method: "POST",
                         headers: { "Authorization": `Bearer ${user.token}` },
                     });
-                    alert(r.ok ? "Job saved!" : "Could not save job.");
-                } catch (e) { alert("Could not save job."); }
+                    alert(r.ok ? T("details.saved", "Job saved!") : T("details.saveFail", "Could not save job."));
+                } catch (e) { alert(T("details.saveFail", "Could not save job.")); }
             });
         }
 

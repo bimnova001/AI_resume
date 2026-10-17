@@ -461,7 +461,7 @@
     <section class="hero-section" aria-labelledby="hero-title">
       <div class="hero-badge" aria-label="AI-powered platform" data-aos="fade-up" data-aos-duration="800"> 
         <span class="hero-badge-dot" aria-hidden="true"></span>
-        AI-Powered Career Platform
+        <span data-i18n="hero.badge">AI-Powered Career Platform</span>
       </div>
 
       <div data-aos="fade-up" data-aos-duration="900">
@@ -469,7 +469,7 @@
         AI Career Navigator<br>
         <mark>Find Your Path to Your Dream Career</mark>
       </h1>
-      <p class="hero-sub" data-i18n="hero.title">
+      <p class="hero-sub" data-i18n="hero.sub">
         Analyze your resume, discover skill gaps, 
         match with industry demands, and get a personalized 
         roadmap to become job-ready.
@@ -479,14 +479,14 @@
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
             <path d="M9 3v12M4 8l5-5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Analyze Your Resume
+          <span data-i18n="hero.cta.analyze">Analyze Your Resume</span>
         </a>
         <a href="/pages/job-listings.html" class="btn btn-secondary">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
             <circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.8"/>
             <path d="M14.5 14.5l-3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
-          Browse Jobs
+          <span data-i18n="hero.cta.browse">Browse Jobs</span>
         </a>
       </div>
         </div>
@@ -497,11 +497,11 @@
     <section class="jobs-section" aria-labelledby="jobs-title">
       <div class="section-header">
         <div>
-          <div class="section-eyebrow">Opportunities</div>
-          <h2 class="section-title" id="jobs-title">Featured Job Openings</h2>
+          <div class="section-eyebrow" data-i18n="home.opportunities">Opportunities</div>
+          <h2 class="section-title" id="jobs-title" data-i18n="home.featured">Featured Job Openings</h2>
         </div>
         <a href="/pages/job-listings.html" class="view-all-link" aria-label="View all job listings">
-          View all
+          <span data-i18n="home.viewAll">View all</span>
           <svg viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -546,7 +546,8 @@
     function renderJobs() {
       const grid = document.getElementById('jobsGrid');
       if (!jobs.length) {
-        grid.innerHTML = `<p style="color:#64748b">No postings yet — open <a href="/pages/job-listings.html">Jobs</a> and press “Refresh real postings”.</p>`;
+        const empty = (window.T ? T("home.empty", "No postings yet — open Jobs and press Refresh real postings.") : "No postings yet — open Jobs and press Refresh real postings.");
+        grid.innerHTML = `<p style="color:#64748b">${empty}</p>`;
         return;
       }
       grid.innerHTML = jobs.map((job, i) => {

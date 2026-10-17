@@ -123,6 +123,7 @@ Used for:
 ## Language Model
 
 **Qwen2.5-7B-Instruct (Q4_K_M, chat JSON mode + 1 repair retry)**
+— or Google Gemini API (`LLM_PROVIDER=google` + `GOOGLE_API_KEY`)
 
 Used for:
 
@@ -158,6 +159,8 @@ Used for:
 Free, no key (all verified live, ~130+ postings per refresh):
 
 * Remotive, Arbeitnow, Remote OK, Jobicy, The Muse — `POST /jobs/refresh`
+  (baseline + category/tag/query rotation: dev, data, design, marketing,
+  sales, support… — set `JOBS_DIVERSE=0` for baseline only)
 * Optional keys: Adzuna (`ADZUNA_APP_ID`/`ADZUNA_APP_KEY`), Google Jobs via SerpApi (`SERPAPI_KEY`)
 * LinkedIn / Facebook: reserved adapter slots in `model/job_sources.py`
   (no free public API — plug official API access when available)
@@ -192,8 +195,23 @@ Free, no key (all verified live, ~130+ postings per refresh):
 ## Tests
 
 ```
-pytest tests/ test.py -v     # 64 tests, no GPU/model download needed
+pytest tests/ test.py -v     # 125 tests, no GPU/model download needed
 ```
+
+## Multi-language UI (10 languages)
+
+English, ไทย, 中文, 日本語, 한국어, Tiếng Việt, Bahasa Indonesia,
+Bahasa Melayu, हिन्दी, Español — 196 keys per locale in
+`web/locales/<code>/translation.json`
+
+* Static text uses `data-i18n` / `data-i18n-ph` attributes; JS-rendered strings
+  use `T("key", "English fallback")` (works even if the i18next CDN fails)
+* Language picker in the shared navbar (auto-injected, persists in localStorage)
+* Resume analysis is machine-translated to the selected language
+  (`/translate`, `zh → zh-cn` mapping); English is the source language
+* `tests/test_i18n.py` verifies all 10 locales exist, parse, and share the same key set
+
+---
 
 ## Docker
 

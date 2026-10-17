@@ -3,11 +3,23 @@ import json
 import re
 
 
+def _strip_fences(text):
+    """Remove ```json ... ``` / ``` ... ``` wrappers models love to add."""
+    t = text.strip()
+    if t.startswith("```"):
+        lines = t.split("\n")
+        lines = lines[1:]  # drop opening fence (``` or ```json)
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]  # drop closing fence
+        t = "\n".join(lines).strip()
+    return t
+
+
 def parse_llm_json(text):
     """Parse (possibly truncated/noisy) LLM output as JSON. Single source of truth."""
     if not isinstance(text, str):
         return None
-    text = text.strip()
+    text = _strip_fences(text.strip())
     try:
         return json.loads(text)
     except json.JSONDecodeError:

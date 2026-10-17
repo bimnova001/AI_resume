@@ -47,6 +47,14 @@ def test_analyze_repairs_invalid_json(monkeypatch):
     assert len(fake.calls) == 2  # original + repair
 
 
+def test_repair_prompt_restates_schema(monkeypatch):
+    fake = _patch(monkeypatch, ["bad", '{"resume_score": 1, "summary": "x"}'])
+    llm.analyze_resume("resume", "Dev", 50, {}, "", False, "en")
+    repair_msg = fake.calls[1]["messages"][-1]["content"]
+    assert "resume_score" in repair_msg  # schema hint included
+    assert "bad" in repair_msg  # previous reply included
+
+
 def test_analyze_gives_up_gracefully(monkeypatch):
     fake = _patch(monkeypatch, ["garbage{{"])
     out = llm.analyze_resume("resume", "Dev", 50, {}, "", False, "en")
@@ -74,3 +82,12 @@ def test_market_analysis_json_mode(monkeypatch):
 def test_default_model_is_7b():
     assert "7B" in llm_mod.DEFAULT_REPO or "7b" in llm_mod.DEFAULT_FILE
     assert "3B" not in llm_mod.DEFAULT_REPO and "3b" not in llm_mod.DEFAULT_FILE
+
+
+def test_local_cached_checks_exact_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # Unrelated gguf must NOT count (the old bug).
+    cache = tmp_path / "model_cache" / "other"
+    cache.mkdir(parents=True)
+    (cache / "something.gguf").write_bytes(b"x")
+    assert llm_mod._local_model_cached() is False

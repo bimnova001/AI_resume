@@ -75,7 +75,7 @@ app.post("/analyze", upload.single("resume"), async (req, res) => {
 
 app.post("/translate", async (req, res) => {
     try {
-        const { text } = req.body;
+        const { text, target_lang } = req.body;
 
         if (!text) {
             return res.json({ translatedText: text });
@@ -83,7 +83,7 @@ app.post("/translate", async (req, res) => {
 
         const response = await axios.post(
             `${BACKEND_URL}/translate`,
-            { text: text, target_lang: "th" },
+            { text: text, target_lang: target_lang || "th" },
             { timeout: 35000 }
         );
 

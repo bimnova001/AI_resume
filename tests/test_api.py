@@ -87,6 +87,7 @@ def test_analyze_happy_path_and_cleanup(tmp_uploads, ai_mocked):
     assert body["analysis"] == {"resume_score": 80, "summary": "good"}
     assert body["history_id"] is not None  # anonymous history still recorded
     assert body["suggested_jobs"][0]["title"] == "AI Engineer"
+    assert body["analysis_parse_ok"] is True
     assert list(tmp_uploads.iterdir()) == []  # no leftover files
 
 
@@ -94,6 +95,21 @@ def test_analyze_long_title_rejected(tmp_uploads, ai_mocked):
     r = client.post("/analyze", files={"file": _pdf()},
                     data={"job_title": "x" * 500})
     assert r.status_code == 400
+
+
+def test_analyze_provider_failure_is_502(tmp_uploads, monkeypatch):
+    monkeypatch.setattr(app_module, "extract_pdf", lambda path: "resume text")
+    monkeypatch.setattr(app_module, "calculate_similarity", lambda r, j: 50.0)
+
+    def boom(*a, **k):
+        raise RuntimeError("Gemini request failed after 3 tries (model=x)")
+
+    monkeypatch.setattr(app_module, "analyze_resume", boom)
+    monkeypatch.setattr(app_module.matcher, "suggest_jobs", lambda *a, **k: [])
+    r = client.post("/analyze", files={"file": _pdf()},
+                    data={"job_title": "AI Engineer"})
+    assert r.status_code == 502
+    assert "unavailable" in r.json()["detail"]
 
 
 # ---------- jobs ----------

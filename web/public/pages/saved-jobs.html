@@ -231,12 +231,13 @@
 </head>
 <body>
     <div id="navbar-placeholder"></div>
+<script src="/js/i18n.js"></script>
     <script src="/js/navbar.js"></script>
 
     <div class="container" data-aos="fade-up" data-aos-duration="800">
         <div class="page-header">
-            <h1 class="page-title">Saved Jobs</h1>
-            <p class="page-subtitle">Jobs you've bookmarked for later review</p>
+            <h1 class="page-title" data-i18n="saved.title">Saved Jobs</h1>
+            <p class="page-subtitle" data-i18n="saved.subtitle">Jobs you've bookmarked for later review</p>
         </div>
 
         <div id="savedContainer" role="list" aria-label="Saved jobs"></div>
@@ -264,6 +265,8 @@
             document.getElementById('userInitial').textContent = user.initials || user.name.charAt(0).toUpperCase();
         }
 
+        const T = window.T || ((k, fb) => (fb !== undefined ? fb : k));
+
         function escapeHtml(value) {
             return String(value == null ? "" : value)
                 .replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -272,12 +275,13 @@
         }
 
         function emptyState(title, text, cta) {
+            const browse = `<a href="/pages/job-listings.html" class="btn-primary">${escapeHtml(T("saved.browse", "Browse Jobs"))}</a>`;
             document.getElementById('savedContainer').innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon"></div>
                     <div class="empty-title">${escapeHtml(title)}</div>
                     <p class="empty-text">${escapeHtml(text)}</p>
-                    ${cta || '<a href="/pages/job-listings.html" class="btn-primary">Browse Jobs</a>'}
+                    ${cta || browse}
                 </div>`;
         }
 
@@ -285,9 +289,9 @@
             let user = {};
             try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch (e) {}
             if (!user.token) {
-                emptyState("Log in required",
-                    "Log in to sync saved jobs with your account.",
-                    '<a href="/pages/login.html" class="btn-primary">Log in</a>');
+                emptyState(T("common.loginRequired", "Log in required"),
+                    T("common.loginRequiredSub", "Log in to sync saved jobs with your account."),
+                    `<a href="/pages/login.html" class="btn-primary">${escapeHtml(T("common.login", "Log in"))}</a>`);
                 return;
             }
             let jobs = [];
@@ -296,26 +300,28 @@
                     headers: { "Authorization": `Bearer ${user.token}` },
                 });
                 if (r.status === 401) {
-                    emptyState("Session expired", "Please log in again.",
-                        '<a href="/pages/login.html" class="btn-primary">Log in</a>');
+                    emptyState(T("saved.sessionExpired", "Session expired"),
+                        T("saved.loginAgain", "Please log in again."),
+                        `<a href="/pages/login.html" class="btn-primary">${escapeHtml(T("common.login", "Log in"))}</a>`);
                     return;
                 }
                 jobs = (await r.json()).jobs || [];
             } catch (e) {
-                emptyState("Could not load saved jobs", "Check the server and retry.");
+                emptyState(T("saved.loadFail", "Could not load saved jobs"),
+                    T("common.loadFail", "Check the server and retry."));
                 return;
             }
             if (!jobs.length) {
-                emptyState("No Saved Jobs Yet",
-                    "Start exploring job listings and save positions that interest you.");
+                emptyState(T("saved.empty", "No Saved Jobs Yet"),
+                    T("saved.emptySub", "Start exploring job listings and save positions that interest you."));
                 return;
             }
             document.getElementById('savedContainer').innerHTML = jobs.map(j => `
                 <div class="empty-state" style="text-align:left;padding:24px 28px;margin-bottom:12px" role="listitem">
                     <div class="empty-title" style="font-size:1.1rem">${escapeHtml(j.title)}</div>
                     <p class="empty-text" style="margin-bottom:12px">${escapeHtml(j.company || "")} · ${escapeHtml(j.location || "")} · via ${escapeHtml(j.source || "")}</p>
-                    <a href="/pages/job-details.html?id=${encodeURIComponent(j.id)}" class="btn-primary">View</a>
-                    ${j.url ? `<a href="${escapeHtml(j.url)}" target="_blank" rel="noopener" class="btn-primary" style="margin-left:8px">Apply ↗</a>` : ""}
+                    <a href="/pages/job-details.html?id=${encodeURIComponent(j.id)}" class="btn-primary">${escapeHtml(T("saved.view", "View"))}</a>
+                    ${j.url ? `<a href="${escapeHtml(j.url)}" target="_blank" rel="noopener" class="btn-primary" style="margin-left:8px">${escapeHtml(T("common.apply", "Apply"))} ↗</a>` : ""}
                 </div>`).join("");
         }
 

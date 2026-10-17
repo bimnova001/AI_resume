@@ -68,3 +68,29 @@ def test_suggest_never_raises():
         raise RuntimeError("model down")
 
     assert matcher.suggest_jobs("Python", similarity_fn=boom) == []
+
+
+def test_job_title_prefilter_finds_otherwise_invisible_job():
+    _seed()
+    # Resume shares NO keyword with the UX job; only the requested title finds it.
+    out = matcher.suggest_jobs("zzzqqq-no-such-skill", limit=3,
+                               job_title="Designer",
+                               similarity_fn=lambda r, j: 50.0)
+    assert [j["title"] for j in out] == ["UX Designer"]
+    # Same resume without the title hint -> nothing.
+    assert matcher.suggest_jobs("zzzqqq-no-such-skill", limit=3,
+                               similarity_fn=lambda r, j: 50.0) == []
+
+
+def test_job_title_search_never_exceeds_cap():
+    _seed()
+    calls = []
+
+    def counting(r, j):
+        calls.append(j)
+        return 10.0
+
+    matcher.suggest_jobs("Python", limit=3, candidate_cap=2,
+                         job_title="e",  # matches both seeds
+                         similarity_fn=counting)
+    assert len(calls) <= 2

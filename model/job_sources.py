@@ -31,6 +31,24 @@ from logger import logger
 TIMEOUT = 20.0
 
 
+def _diverse_on():
+    return os.getenv("JOBS_DIVERSE", "1") == "1"
+
+
+def _per_query(limit, n_queries):
+    """Split the limit across queries (at least 3 each)."""
+    return max(3, -(-max(1, limit) // max(1, n_queries)))
+
+
+def _parse_jobs_list(resp, key):
+    try:
+        data = resp.json()
+    except Exception:
+        return []
+    items = data.get(key, []) if isinstance(data, dict) else []
+    return items if isinstance(items, list) else []
+
+
 def strip_html(raw):
     """Remove HTML tags/entities from API descriptions (stdlib only)."""
     if not raw:
@@ -62,30 +80,53 @@ def normalize(source, raw):
 
 # ---------------- free sources (no key) ----------------
 
+REMOTIVE_CATEGORIES = ["software-dev", "data", "design", "marketing",
+                       "customer-support", "sales", "product", "devops"]
+
+
+def _norm_remotive(j):
+    return normalize("remotive", {
+        "external_id": j.get("id"),
+        "title": j.get("title"),
+        "company": j.get("company_name"),
+        "location": j.get("candidate_required_location") or "Remote",
+        "type": j.get("job_type") or "Full-time",
+        "salary": j.get("salary") or "",
+        "description": strip_html(j.get("description"))[:2000],
+        "url": j.get("url"),
+        "tags": [c for c in (j.get("category"),) if c],
+        "posted_at": j.get("publication_date") or "",
+    })
+
+
 async def fetch_remotive(client, limit=50):
+    # Baseline (no filter) + one pass per category => tech + non-tech mix.
+    categories = [None] + (REMOTIVE_CATEGORIES if _diverse_on() else [])
+    per = _per_query(limit, len(categories))
+    jobs = []
     try:
-        resp = await client.get(
-            "https://remotive.com/api/remote-jobs", params={"limit": limit}, timeout=TIMEOUT
-        )
-        data = resp.json()
-        jobs = []
-        for j in data.get("jobs", [])[:limit]:
-            jobs.append(normalize("remotive", {
-                "external_id": j.get("id"),
-                "title": j.get("title"),
-                "company": j.get("company_name"),
-                "location": j.get("candidate_required_location") or "Remote",
-                "type": j.get("job_type") or "Full-time",
-                "salary": j.get("salary") or "",
-                "description": strip_html(j.get("description"))[:2000],
-                "url": j.get("url"),
-                "tags": [c for c in (j.get("category"),) if c],
-                "posted_at": j.get("publication_date") or "",
-            }))
-        return jobs
+        for cat in categories:
+            params = {"limit": per}
+            if cat:
+                params["category"] = cat
+            try:
+                resp = await client.get(
+                    "https://remotive.com/api/remote-jobs",
+                    params=params, timeout=TIMEOUT)
+            except Exception as e:
+                logger.warning(f"Remotive fetch failed ({cat}): {e}")
+                continue
+            for j in _parse_jobs_list(resp, "jobs")[:per]:
+                jobs.append(_norm_remotive(j))
+                if len(jobs) >= limit:
+                    return jobs[:limit]
+        return jobs[:limit]
     except Exception as e:
         logger.warning(f"Remotive fetch failed: {e}")
         return []
+
+
+REMOTEOK_TAGS = ["dev", "design", "marketing", "data", "support", "sales"]
 
 
 async def fetch_remoteok(client, limit=50):
@@ -93,102 +134,148 @@ async def fetch_remoteok(client, limit=50):
 
     ToS: link back to the Remote OK URL and mention Remote OK as source.
     We store their canonical URL and surface the source label in the UI.
+    Baseline (all) + one pass per tag => diverse roles.
     """
+    tags = [None] + (REMOTEOK_TAGS if _diverse_on() else [])
+    per = _per_query(limit, len(tags))
+    jobs = []
     try:
-        resp = await client.get("https://remoteok.com/api", timeout=TIMEOUT)
-        items = resp.json()
-        jobs = []
-        for j in items:
-            if not isinstance(j, dict) or "position" not in j:
-                continue  # first item is a legal notice, not a job
-            salary = ""
-            if j.get("salary_min") or j.get("salary_max"):
-                salary = f"${j.get('salary_min', '?')} - ${j.get('salary_max', '?')}"
-            jobs.append(normalize("remoteok", {
-                "external_id": j.get("id") or j.get("slug"),
-                "title": j.get("position"),
-                "company": j.get("company"),
-                "location": j.get("location") or "Remote",
-                "type": "Remote",
-                "salary": salary,
-                "description": strip_html(j.get("description"))[:2000],
-                "url": j.get("url"),
-                "tags": j.get("tags") or [],
-                "posted_at": j.get("date") or "",
-            }))
-            if len(jobs) >= limit:
-                break
-        return jobs
+        for tag in tags:
+            params = {}
+            if tag:
+                params["tag"] = tag
+            try:
+                resp = await client.get("https://remoteok.com/api",
+                                        params=params or None, timeout=TIMEOUT)
+                items = resp.json()
+            except Exception as e:
+                logger.warning(f"RemoteOK fetch failed ({tag}): {e}")
+                continue
+            if not isinstance(items, list):
+                continue
+            for j in items:
+                if not isinstance(j, dict) or "position" not in j:
+                    continue  # first item is a legal notice, not a job
+                salary = ""
+                if j.get("salary_min") or j.get("salary_max"):
+                    salary = f"${j.get('salary_min', '?')} - ${j.get('salary_max', '?')}"
+                jobs.append(normalize("remoteok", {
+                    "external_id": j.get("id") or j.get("slug"),
+                    "title": j.get("position"),
+                    "company": j.get("company"),
+                    "location": j.get("location") or "Remote",
+                    "type": "Remote",
+                    "salary": salary,
+                    "description": strip_html(j.get("description"))[:2000],
+                    "url": j.get("url"),
+                    "tags": j.get("tags") or [],
+                    "posted_at": j.get("date") or "",
+                }))
+                if len(jobs) >= limit:
+                    return jobs[:limit]
+        return jobs[:limit]
     except Exception as e:
         logger.warning(f"RemoteOK fetch failed: {e}")
         return []
 
 
+JOBICY_TAGS = ["design", "marketing", "data", "customer-support"]
+
+
 async def fetch_jobicy(client, limit=50):
-    """Jobicy remote jobs (free, no key)."""
+    """Jobicy remote jobs (free, no key). Baseline + tag passes."""
+    tags = [None] + (JOBICY_TAGS if _diverse_on() else [])
+    per = _per_query(limit, len(tags))
+    jobs = []
     try:
-        resp = await client.get(
-            "https://jobicy.com/api/v2/remote-jobs",
-            params={"count": min(limit, 50)}, timeout=TIMEOUT,
-        )
-        jobs = []
-        for j in resp.json().get("jobs", [])[:limit]:
-            job_type = j.get("jobType")
-            if isinstance(job_type, list):
-                job_type = ", ".join(job_type)
-            jobs.append(normalize("jobicy", {
-                "external_id": j.get("id") or j.get("jobSlug"),
-                "title": j.get("jobTitle"),
-                "company": j.get("companyName"),
-                "location": j.get("jobGeo") or "Remote",
-                "type": job_type or "",
-                "salary": "",
-                "description": strip_html(
-                    j.get("jobDescription") or j.get("jobExcerpt"))[:2000],
-                "url": j.get("url"),
-                "tags": j.get("jobIndustry") or [],
-                "posted_at": j.get("pubDate") or "",
-            }))
-        return jobs
+        for tag in tags:
+            params = {"count": min(per, 50)}
+            if tag:
+                params["tag"] = tag
+            try:
+                resp = await client.get(
+                    "https://jobicy.com/api/v2/remote-jobs",
+                    params=params, timeout=TIMEOUT)
+            except Exception as e:
+                logger.warning(f"Jobicy fetch failed ({tag}): {e}")
+                continue
+            for j in _parse_jobs_list(resp, "jobs")[:per]:
+                job_type = j.get("jobType")
+                if isinstance(job_type, list):
+                    job_type = ", ".join(job_type)
+                jobs.append(normalize("jobicy", {
+                    "external_id": j.get("id") or j.get("jobSlug"),
+                    "title": j.get("jobTitle"),
+                    "company": j.get("companyName"),
+                    "location": j.get("jobGeo") or "Remote",
+                    "type": job_type or "",
+                    "salary": "",
+                    "description": strip_html(
+                        j.get("jobDescription") or j.get("jobExcerpt"))[:2000],
+                    "url": j.get("url"),
+                    "tags": j.get("jobIndustry") or [],
+                    "posted_at": j.get("pubDate") or "",
+                }))
+                if len(jobs) >= limit:
+                    return jobs[:limit]
+        return jobs[:limit]
     except Exception as e:
         logger.warning(f"Jobicy fetch failed: {e}")
         return []
 
 
+MUSE_CATEGORIES = ["Engineering", "Design", "Marketing", "Data Science"]
+
+
+def _norm_muse(j):
+    company = j.get("company") or {}
+    locs = [loc.get("name", "") for loc in (j.get("locations") or [])]
+    levels = [lv.get("name", "") for lv in (j.get("levels") or [])]
+    refs = j.get("refs") or {}
+    return normalize("muse", {
+        "external_id": j.get("id"),
+        "title": j.get("name"),
+        "company": company.get("name", "") if isinstance(company, dict) else "",
+        "location": ", ".join(l for l in locs if l),
+        "type": ", ".join(l for l in levels if l),
+        "salary": "",
+        "description": strip_html(j.get("contents"))[:2000],
+        "url": refs.get("landing_page", "") if isinstance(refs, dict) else "",
+        "tags": [c.get("name", "") for c in (j.get("categories") or [])
+                 if isinstance(c, dict) and c.get("name")],
+        "posted_at": j.get("publication_date") or "",
+    })
+
+
 async def fetch_muse(client, limit=50):
-    """The Muse job listings (free, no key). Paginates until limit."""
+    """The Muse job listings (free, no key). Baseline + category passes."""
+    categories = [None] + (MUSE_CATEGORIES if _diverse_on() else [])
+    per = _per_query(limit, len(categories))
+    jobs = []
     try:
-        jobs = []
-        page = 0
-        while len(jobs) < limit and page < 5:
-            resp = await client.get(
-                "https://www.themuse.com/api/public/jobs",
-                params={"page": page}, timeout=TIMEOUT,
-            )
-            results = resp.json().get("results", [])
-            if not results:
-                break
-            for j in results:
-                company = j.get("company") or {}
-                locs = [loc.get("name", "") for loc in (j.get("locations") or [])]
-                levels = [lv.get("name", "") for lv in (j.get("levels") or [])]
-                refs = j.get("refs") or {}
-                jobs.append(normalize("muse", {
-                    "external_id": j.get("id"),
-                    "title": j.get("name"),
-                    "company": company.get("name", "") if isinstance(company, dict) else "",
-                    "location": ", ".join(l for l in locs if l),
-                    "type": ", ".join(l for l in levels if l),
-                    "salary": "",
-                    "description": strip_html(j.get("contents"))[:2000],
-                    "url": refs.get("landing_page", "") if isinstance(refs, dict) else "",
-                    "tags": [c.get("name", "") for c in (j.get("categories") or [])
-                             if isinstance(c, dict) and c.get("name")],
-                    "posted_at": j.get("publication_date") or "",
-                }))
-                if len(jobs) >= limit:
+        for cat in categories:
+            page = 0
+            got = 0
+            while got < per and page < 3:
+                params = {"page": page}
+                if cat:
+                    params["category"] = cat
+                try:
+                    resp = await client.get(
+                        "https://www.themuse.com/api/public/jobs",
+                        params=params, timeout=TIMEOUT)
+                    results = _parse_jobs_list(resp, "results")
+                except Exception as e:
+                    logger.warning(f"Muse fetch failed ({cat}): {e}")
                     break
-            page += 1
+                if not results:
+                    break
+                for j in results:
+                    jobs.append(_norm_muse(j))
+                    got += 1
+                    if len(jobs) >= limit:
+                        return jobs[:limit]
+                page += 1
         return jobs[:limit]
     except Exception as e:
         logger.warning(f"Muse fetch failed: {e}")
@@ -223,34 +310,49 @@ async def fetch_arbeitnow(client, limit=50):
 
 # ---------------- key-gated sources ----------------
 
+ADZUNA_WHATS = ["software engineer", "data analyst", "designer",
+                "marketing", "sales", "accountant"]
+
+
 async def fetch_adzuna(client, limit=50):
     app_id = os.getenv("ADZUNA_APP_ID", "")
     app_key = os.getenv("ADZUNA_APP_KEY", "")
     country = os.getenv("ADZUNA_COUNTRY", "th")
     if not app_id or not app_key:
         return []
+    whats = ADZUNA_WHATS if _diverse_on() else [os.getenv("ADZUNA_WHAT", "")]
+    per = _per_query(limit, len(whats))
+    jobs = []
     try:
-        resp = await client.get(
-            f"https://api.adzuna.com/v1/api/jobs/{country}/search/1",
-            params={"app_id": app_id, "app_key": app_key,
-                    "results_per_page": min(limit, 50), "content-type": "application/json"},
-            timeout=TIMEOUT,
-        )
-        jobs = []
-        for j in resp.json().get("results", [])[:limit]:
-            jobs.append(normalize("adzuna", {
-                "external_id": j.get("id"),
-                "title": j.get("title"),
-                "company": (j.get("company") or {}).get("display_name", ""),
-                "location": (j.get("location") or {}).get("display_name", ""),
-                "type": j.get("contract_type") or "",
-                "salary": j.get("salary_min") and f"{j.get('salary_min')}+" or "",
-                "description": strip_html(j.get("description"))[:2000],
-                "url": j.get("redirect_url"),
-                "tags": (j.get("category") or {}).get("label") and [j["category"]["label"]] or [],
-                "posted_at": j.get("created") or "",
-            }))
-        return jobs
+        for what in whats:
+            params = {"app_id": app_id, "app_key": app_key,
+                      "results_per_page": min(per, 50),
+                      "content-type": "application/json"}
+            if what:
+                params["what"] = what
+            try:
+                resp = await client.get(
+                    f"https://api.adzuna.com/v1/api/jobs/{country}/search/1",
+                    params=params, timeout=TIMEOUT)
+            except Exception as e:
+                logger.warning(f"Adzuna fetch failed ({what}): {e}")
+                continue
+            for j in _parse_jobs_list(resp, "results")[:per]:
+                jobs.append(normalize("adzuna", {
+                    "external_id": j.get("id"),
+                    "title": j.get("title"),
+                    "company": (j.get("company") or {}).get("display_name", ""),
+                    "location": (j.get("location") or {}).get("display_name", ""),
+                    "type": j.get("contract_type") or "",
+                    "salary": j.get("salary_min") and f"{j.get('salary_min')}+" or "",
+                    "description": strip_html(j.get("description"))[:2000],
+                    "url": j.get("redirect_url"),
+                    "tags": (j.get("category") or {}).get("label") and [j["category"]["label"]] or [],
+                    "posted_at": j.get("created") or "",
+                }))
+                if len(jobs) >= limit:
+                    return jobs[:limit]
+        return jobs[:limit]
     except Exception as e:
         logger.warning(f"Adzuna fetch failed: {e}")
         return []

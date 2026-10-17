@@ -32,8 +32,9 @@ import uuid
 import httpx
 from datetime import datetime, timedelta
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file (real environment wins over file —
+# important for docker-compose `environment:` and for hermetic tests).
+load_dotenv(override=False)
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 
@@ -48,6 +49,15 @@ async def lifespan(app: FastAPI):
         db.init_db()
     except Exception as e:
         logger.error(f"DB init failed: {e}")
+    try:
+        from model.llm import _provider as _llm_provider
+        prov = _llm_provider()
+        extra = ""
+        if prov in ("google", "gemini"):
+            extra = f" model={os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')}"
+        logger.info(f"LLM provider={prov}{extra}")
+    except Exception:
+        pass
     # Server pulls postings by itself: seed when empty + periodic refresh.
     seed_task = None
     scheduler_on = os.getenv("JOBS_AUTO_REFRESH", "1") == "1"
@@ -141,6 +151,10 @@ def _current_user_id(authorization=None):
     return user["id"] if user else None
 
 
+# googletrans destination codes per UI language.
+TRANSLATE_DEST = {"zh": "zh-cn"}
+
+
 @app.post("/translate")
 async def translate_text(req: TranslateRequest):
     """Translate text to target language using googletrans"""
@@ -152,9 +166,11 @@ async def translate_text(req: TranslateRequest):
             logger.warning("Translator unavailable, echoing original text")
             return {"translatedText": req.text}
 
+        dest = TRANSLATE_DEST.get((req.target_lang or "th").strip().lower(),
+                                  (req.target_lang or "th").strip().lower() or "th")
         # googletrans can be slow sometimes, adding delay tolerance
         result = await asyncio.wait_for(
-            asyncio.to_thread(translator.translate, req.text, req.target_lang),
+            asyncio.to_thread(translator.translate, req.text, dest),
             timeout=30.0
         )
         return {"translatedText": result.text}
@@ -227,6 +243,14 @@ async def analyze(
                 is_new_grad.lower() in ("true", "1", "yes"),
                 normalized_language
             )
+        except RuntimeError as e:
+            # Provider-level failure (e.g. Gemini overloaded / bad model name).
+            # 502, not 500: our code is fine, the upstream AI service failed.
+            logger.error(f"LLM provider failed: {e}")
+            raise HTTPException(
+                status_code=502,
+                detail=f"AI provider unavailable "
+                       f"({os.getenv('LLM_PROVIDER', 'local')}): {e}")
         except Exception as e:
             logger.error(f"LLM analysis failed: {e}")
             raise HTTPException(status_code=500, detail="AI analysis failed")
@@ -235,10 +259,18 @@ async def analyze(
             return parse_llm_json(text)
 
         parsed = parse_json(llm_result)
+        parse_ok = parsed is not None
+        if not parse_ok:
+            head = (llm_result or "")[:300].replace("\n", " ")
+            logger.warning(
+                f"LLM output unparseable (len={len(llm_result or '')}): {head}...")
 
         # AI job picks: top-3 real postings matching this resume (best effort).
+        # Pre-filtered by the requested title/type + resume keywords, so the
+        # embedding model only ever scores a capped handful — never bulk jobs.
         try:
-            suggested_jobs = matcher.suggest_jobs(resume_text, limit=3)
+            suggested_jobs = matcher.suggest_jobs(
+                resume_text, limit=3, job_title=job_title, job_type=job_type)
         except Exception as e:
             logger.warning(f"Job suggestion failed: {e}")
             suggested_jobs = []
@@ -280,6 +312,7 @@ async def analyze(
             "rules": rules,
             "analysis_raw": llm_result,
             "analysis": parsed if parsed is not None else llm_result,
+            "analysis_parse_ok": parse_ok,
             "history_id": history_id,
             "suggested_jobs": suggested_jobs,
         }
@@ -595,7 +628,16 @@ async def api_admin_stats():
         "interval_hours": os.getenv("JOBS_REFRESH_HOURS", "6"),
         "max_upload_mb": os.getenv("MAX_UPLOAD_MB", "10"),
         "db_path": db.db_path(),
+        "diverse_fetch": os.getenv("JOBS_DIVERSE", "1") == "1",
+        "llm_provider": os.getenv("LLM_PROVIDER", "local"),
+        "gemini_model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        "google_key_set": bool(os.getenv("GOOGLE_API_KEY", "").strip()),
     }
+    try:
+        from model import google_llm as _g
+        out["config"]["gemini_model_used"] = _g.last_model
+    except Exception:
+        pass
     return out
 
 
